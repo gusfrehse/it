@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
+	CACHE STRING "Vcpkg toolchain file")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+
 project(it CXX)
 
 find_package(SDL2 CONFIG REQUIRED)
 
-add_executable(it src/main.cpp)
+add_executable(it src/main.cpp src/window.cpp)
 target_compile_features(it PRIVATE cxx_std_20)
 
 target_link_libraries(it PRIVATE
