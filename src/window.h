@@ -3,13 +3,17 @@
 
 #include <SDL2/SDL.h>
 
-class window
+class Window
 {
+public:
+	int m_width, m_height;
+
+private:
 	SDL_Window *m_window;
 
 public:
-	window(int width, int height, char const *name);
-	~window();
+	Window(int width, int height, char const *name);
+	~Window();
 };
 
 #endif

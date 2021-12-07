@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <cstdio>
 
-window::window(int width, int height , char const *name) {
+Window::Window(int width, int height , char const *name) {
 	m_window = SDL_CreateWindow(
 			name,
 			SDL_WINDOWPOS_UNDEFINED,
@@ -20,6 +20,6 @@ window::window(int width, int height , char const *name) {
 	}
 }
 
-window::~window() {
+Window::~Window() {
 	SDL_DestroyWindow(m_window);
 }
