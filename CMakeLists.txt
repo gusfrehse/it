@@ -13,5 +13,4 @@ target_compile_features(it PRIVATE cxx_std_20)
 
 target_link_libraries(it PRIVATE
 	SDL2::SDL2
-	SDL2::SDL2main
-	SDL2::SDL2-static)
+	SDL2::SDL2main)
