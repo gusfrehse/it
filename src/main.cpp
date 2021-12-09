@@ -1,56 +1,125 @@
-// SDL2 Hello, World!
-// This should display a white screen for 2 seconds
-// compile with: clang++ main.cpp -o hello_sdl2 -lSDL2
-// run with: ./hello_sdl2
+#include <gl/glew.h>
 #include <SDL2/SDL.h>
-#include <cstdio>
-#include <ctime>
-#include <cstdlib>
-#include <vector>
 
-#include "window.h"
+#include <stdbool.h>
+#define CODE(...) #__VA_ARGS__
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+int main(int argc, char** argv) {
+    unsigned int width = 320 * 4;
+    unsigned int height = 180 * 4;
 
-#define BLOCK_SIZE 512
 
-std::vector<char> read_file(char *path) {
-	int size = 0;
-	int buf_cap = 0;
-	char c;
-	std::vector<char> buffer;
+    // create window
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_Window* window = SDL_CreateWindow("Modern Opengl", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL);
+    SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_GL_SetSwapInterval(1);
 
-	FILE *f;
-
-	f = fopen(path, "r");
-
-	if (!f) {
-		std::fprintf(stderr, "Couldn't open file '%s'\n", path);
-		std::exit(1);
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		fprintf(stderr, "glew error: %s\n", glewGetErrorString(err));
+		return 123;	
 	}
 
-	while ((c = std::getc(f)) != EOF) {
-		buffer.push_back(c);
-	}
+    glViewport(0, 0, width, height);
+    
+    // triangle data
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f,  0.5f, 0.0f
+    };
 
-	fclose(f);
+    // create a vertex array object
+    unsigned int vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-	return buffer;
-}
+    // create a vertex buffer object
+    unsigned int vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+    // add the vertex data to the vertex buffer
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), NULL);
+    glEnableVertexAttribArray(0);
 
-int main(int argc, char* argv[]) {
+    // vertex shader
+    const GLchar* vs_code = "#version 330 core\n" CODE(
+        layout (location = 0) in vec3 aPos;
+        void main(){
+            gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        }
+    );
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		std::fprintf(stderr, "could not initialize sdl2: %s\n", SDL_GetError());
-		return 1;
-	}
+    unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 1, &vs_code, NULL);
+    glCompileShader(vs);
 
-	std::vector buffer = read_file(argv[1]);
+    int success;
+    char infolog[512];
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
+    if(!success){
+        glGetShaderInfoLog(vs, 512, NULL, infolog);
+        printf("%s\n", infolog);
+    }
 
-	Window win(SCREEN_WIDTH, SCREEN_HEIGHT, "it");
+    // fragment shader
+    const GLchar* fs_code = "#version 330 core\n" CODE(
+        out vec4 color;
+        void main()
+        {
+            color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        } 
+    );
 
-	SDL_Quit();
+    unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 1, &fs_code, NULL);
+    glCompileShader(fs);
+
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
+    if(!success){
+        glGetShaderInfoLog(fs, 512, NULL, infolog);
+        printf("%s\n", infolog);
+    }
+
+    // create program
+    unsigned int program = glCreateProgram();
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if(!success){
+        glGetProgramInfoLog(program, 512, NULL, infolog);
+         printf("%s\n", infolog);
+    }
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    // start render loop
+    bool quit = false;
+    while(!quit){
+        SDL_Event event;
+        while(SDL_PollEvent(&event)){
+            if(event.type == SDL_QUIT)
+                quit = true;
+        }
+        glClearColor(1.0, 0.3, 0.3, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glUseProgram(program);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        SDL_GL_SwapWindow(window);
+    }
+    glDeleteProgram(program);
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 	return 0;
 }
