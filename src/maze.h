@@ -7,7 +7,7 @@
 
 #define MAZE_WIDTH  16
 #define MAZE_HEIGHT 16
-#define MAZE_LENGTH 2
+#define MAZE_LENGTH 8
 
 struct maze {
 	uint32_t data[MAZE_WIDTH][MAZE_HEIGHT][MAZE_LENGTH];

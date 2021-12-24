@@ -96,7 +96,7 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 		for (int y = 0; y < MAZE_HEIGHT; y++) {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
 
-				if (data[x][y][z] & NORTH) {
+				if (!(data[x][y][z] & NORTH)) {
 					// North face -> +Z
 					vertices.push_back(glm::vec3(
 								x + wall_size / 2,
@@ -131,8 +131,8 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
 				}
 
-				if (data[x][y][z] & WEST) {
-					// North face -> +X
+				if (!(data[x][y][z] & WEST)) {
+					// West face -> +X
 					vertices.push_back(glm::vec3(
 								x + wall_size / 2,
 								y + wall_size / 2,
@@ -164,6 +164,41 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 								y - wall_size / 2,
 								z - wall_size / 2));
 					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
+				}
+
+				if (!(data[x][y][z] & DOWN)) {
+					// Down face -> +Y
+					vertices.push_back(glm::vec3(
+								x + wall_size / 2,
+								y + wall_size / 2,
+								z + wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					vertices.push_back(glm::vec3(
+								x - wall_size / 2,
+								y + wall_size / 2,
+								z + wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					vertices.push_back(glm::vec3(
+								x + wall_size / 2,
+								y + wall_size / 2,
+								z - wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+
+					vertices.push_back(glm::vec3(
+								x - wall_size / 2,
+								y + wall_size / 2,
+								z - wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					vertices.push_back(glm::vec3(
+								x + wall_size / 2,
+								y + wall_size / 2,
+								z - wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					vertices.push_back(glm::vec3(
+								x - wall_size / 2,
+								y + wall_size / 2,
+								z + wall_size / 2));
+					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
 				}
 			}
 		}

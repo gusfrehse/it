@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include "SDL_events.h"
 #include "SDL_keycode.h"
 #include "maze.h"
 
@@ -245,6 +246,9 @@ int main(int argc, char** argv) {
 					cam_pos += speed * glm::vec3(0.0f, -1.0f, 0.0f);
 					break;
 				}
+				break;
+			case SDL_MOUSEMOTION:
+				// TODO
 				break;
 			}
         }
