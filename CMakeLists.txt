@@ -8,10 +8,16 @@ project(it CXX)
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
-add_executable(it src/main.cpp)
+find_package(glm CONFIG REQUIRED)
+
+add_executable(it
+	src/main.cpp
+	src/maze.cpp)
+
 target_compile_features(it PRIVATE cxx_std_20)
 
 target_link_libraries(it PRIVATE
 	SDL2::SDL2
 	SDL2::SDL2main
-	GLEW::GLEW)
+	GLEW::GLEW
+	glm::glm)
