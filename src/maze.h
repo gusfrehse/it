@@ -9,13 +9,10 @@
 #define MAZE_HEIGHT 16
 #define MAZE_LENGTH 8
 
-struct maze {
+class maze {
 	uint32_t data[MAZE_WIDTH][MAZE_HEIGHT][MAZE_LENGTH];
 
-	uint32_t get(glm::ivec3 pos) const {
-		return data[pos.x][pos.y][pos.z];
-	}
-
+public:
 	maze();
 	void construct(glm::ivec3 start);
 	void reset();

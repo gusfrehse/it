@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <cstdint>
 #include <vector>
 #include <random>
@@ -90,6 +91,16 @@ bool maze::in_bounds(glm::ivec3 p) const {
 }
 
 std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
+	glm::vec3 quad_vertices[] = {
+		glm::vec3( 1.0f,  1.0f,  1.0f),
+		glm::vec3(-1.0f,  1.0f,  1.0f),
+		glm::vec3( 1.0f, -1.0f,  1.0f),
+
+		glm::vec3(-1.0f, -1.0f,  1.0f),
+		glm::vec3( 1.0f, -1.0f,  1.0f),
+		glm::vec3(-1.0f,  1.0f,  1.0f),
+	};
+
 	std::vector<glm::vec3> vertices;
 
 	for (int z = 0; z < MAZE_LENGTH; z++) {
@@ -98,107 +109,28 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 
 				if (!(data[x][y][z] & NORTH)) {
 					// North face -> +Z
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y - wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y - wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y - wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+					for (int i = 0; i < 6; i++) {
+						vertices.push_back((wall_size / 2) * quad_vertices[i] + wall_size * glm::vec3(x, y, z));
+						vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f));
+					}
 				}
 
 				if (!(data[x][y][z] & WEST)) {
 					// West face -> +X
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y - wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
-
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y - wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y - wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
+					for (int i = 0; i < 6; i++) {
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+						vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
+					}
 				}
 
 				if (!(data[x][y][z] & DOWN)) {
 					// Down face -> +Y
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
-
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y + wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x + wall_size / 2,
-								y + wall_size / 2,
-								z - wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
-					vertices.push_back(glm::vec3(
-								x - wall_size / 2,
-								y + wall_size / 2,
-								z + wall_size / 2));
-					vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					for (int i = 0; i < 6; i++) {
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+						vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+					}
 				}
 			}
 		}

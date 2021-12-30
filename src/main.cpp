@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include <stdbool.h>
 #include <cstdlib>
@@ -10,12 +11,15 @@
 
 #include "SDL_events.h"
 #include "SDL_keycode.h"
+#include "input_controller.h"
 #include "maze.h"
 
 #define CODE(...) #__VA_ARGS__
 
 #define WIDTH 1280
 #define HEIGHT 720
+
+bool process_event(SDL_Event event, input_controller& icontroller);
 
 // quad data
 float quad_vertices[] = {
@@ -28,9 +32,6 @@ float quad_vertices[] = {
     -0.5f,  0.5f, 0.0f,
 };
 
-GLuint quad_vao;
-GLuint quad_vbo;
-
 void opengl_message_callback(
 		GLenum source,
 		GLenum type,
@@ -41,6 +42,7 @@ void opengl_message_callback(
 		void const* user_param);
 
 void init(SDL_Window*& window, SDL_GLContext& context) {
+
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(
 			SDL_GL_CONTEXT_PROFILE_MASK,
@@ -59,6 +61,8 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
     context = SDL_GL_CreateContext(window);
 
     SDL_GL_SetSwapInterval(1);
+
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
@@ -80,22 +84,25 @@ int main(int argc, char** argv) {
 	maze m;
 	m.construct(glm::ivec3(0));
 	m.print();
-	auto vertices = m.gen_vertices(1.0f);
+	auto vertices = m.gen_vertices(10.0f);
 
 	SDL_Window* window;
 	SDL_GLContext context;
 
 	init(window, context);
 
+
+
     // create a vertex buffer object and initialize it
     unsigned int vbo;
     glGenBuffers(1, &vbo);
 
     // create a vertex array object
-    glGenVertexArrays(1, &quad_vao);
+	unsigned int vao;
+    glGenVertexArrays(1, &vao);
 
 	// bind vao
-    glBindVertexArray(quad_vao);
+    glBindVertexArray(vao);
 
 	// bind vbo to current array_buffer
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -138,13 +145,16 @@ int main(int argc, char** argv) {
         layout (location = 1) in vec3 attrib_color;
 
 		out vec4 vertex_color;
+		out vec3 pos;
 
 		uniform mat4 mvp;
+		uniform vec3 cam_pos;
 
         void main(){
-			vec4 pos = mvp * vec4(attrib_pos.x, attrib_pos.y, attrib_pos.z, 1.0);
-			vertex_color = vec4(attrib_color / pos.z, 1.0);
-            gl_Position = pos;
+			vertex_color = vec4(attrib_color, 1.0);
+			vec4 position = mvp * vec4(attrib_pos, 1.0);
+			pos = attrib_pos;
+            gl_Position = position;
         }
     );
 
@@ -163,10 +173,15 @@ int main(int argc, char** argv) {
     // fragment shader
     const GLchar* fs_code = "#version 450 core\n" CODE(
 		in  vec4 vertex_color;
+		in  vec3 pos;
         out vec4 color;
+		uniform vec3 cam_pos;
+
         void main()
         {
-            color = vertex_color;
+			float dist = length(pos - cam_pos);
+			dist = dist * dist;
+            color = vertex_color * 50.0 / (dist + 50.0);
         } 
     );
 
@@ -204,69 +219,55 @@ int main(int argc, char** argv) {
 
 	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, 3.0f);
 	glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 cam_front = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 cam_right = glm::cross(cam_front, cam_up);
 	glm::mat4 view = glm::lookAt(cam_pos, glm::vec3(0.0f), cam_up);
-	glm::vec3 model1_pos = glm::vec3(0.0f);
-	glm::mat4 model1 = glm::translate(glm::mat4(1.0f), model1_pos);
-	glm::mat4 m1vp = proj * view * model1;
+	glm::vec3 model_pos = glm::vec3(0.0f);
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), model_pos);
+	glm::mat4 mvp = proj * view * model;
+
+	glm::ivec2 dmouse(0);
 
 	GLint mvp_uniform_loc = glGetUniformLocation(program, "mvp");
+	GLint cam_pos_uniform_loc = glGetUniformLocation(
+													program,
+													"cam_pos");
 
 	long long frame_count = 0;
 
 	float speed = 0.1f;
+	float sensitivity = 0.005f;
+
+	input_controller icontroller;
 
     // start render loop
     bool quit = false;
     while(!quit) {
         SDL_Event event;
-
         while(SDL_PollEvent(&event)) {
-			switch (event.type) {
-			case SDL_QUIT:
-				quit = true;
-				break;
-			case SDL_KEYDOWN:
-				switch (event.key.keysym.sym) {
-				case SDLK_w:
-					cam_pos += speed * glm::vec3(0.0f, 0.0f, -1.0f);
-					break;
-				case SDLK_a:
-					cam_pos += speed * glm::vec3(-1.0f, 0.0f, 0.0f);
-					break;
-				case SDLK_s:
-					cam_pos += speed * glm::vec3(0.0f, 0.0f, 1.0f);
-					break;
-				case SDLK_d:
-					cam_pos += speed * glm::vec3(1.0f, 0.0f, 0.0f);
-					break;
-				case SDLK_SPACE:
-					cam_pos += speed * glm::vec3(0.0f, 1.0f, 0.0f);
-					break;
-				case SDLK_LSHIFT:
-					cam_pos += speed * glm::vec3(0.0f, -1.0f, 0.0f);
-					break;
-				}
-				break;
-			case SDL_MOUSEMOTION:
-				// TODO
-				break;
-			}
+			quit = process_event(event, icontroller);
         }
 
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program);
 
-        glBindVertexArray(quad_vao);
+        glBindVertexArray(vao);
 
 		// send mvp
 		glUniformMatrix4fv(
 				mvp_uniform_loc,
 				1,
 				GL_FALSE,
-				glm::value_ptr(m1vp));
+				glm::value_ptr(mvp));
 
-		// draw quad 1
+		// send cam_pos
+		glUniform3fv(
+				cam_pos_uniform_loc,
+				1,
+				glm::value_ptr(cam_pos));
+
+		// draw maze
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         SDL_GL_SwapWindow(window);
@@ -279,11 +280,42 @@ int main(int argc, char** argv) {
 		//		5.0f,
 		//		10.0f * glm::sin(0.01f * frame_count),
 		//		10.0f * glm::cos(0.01f * frame_count));
+		if (icontroller.is_active(FORWARD)) {
+			cam_pos += speed * cam_front;
+		}
+		
+		if (icontroller.is_active(BACKWARD)) {
+			cam_pos -= speed * cam_front;
+		}
+		
+		if (icontroller.is_active(RIGHT)) {
+			cam_pos += speed * cam_right;
+		}
+		
+		if (icontroller.is_active(LEFT)) {
+			cam_pos -= speed * cam_right;
+		}
+		
+		if (icontroller.is_active(UP)) {
+			cam_pos += speed * cam_up;
+		}
+		
+		if (icontroller.is_active(DOWN)) {
+			cam_pos -= speed * cam_up;
+		}
+
+		icontroller.reload();
+		SDL_GetRelativeMouseState(&dmouse.x, &dmouse.y);
+
+		cam_right = glm::rotate(glm::rotate(cam_right, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
+		cam_front = glm::rotate(glm::rotate(cam_front, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
+		cam_up = glm::cross(cam_right, cam_front);
+		
 		glm::mat4 view = glm::lookAt(
 				cam_pos,
-				glm::vec3(0.0f, 0.0f, -1.0f) + cam_pos,
+				cam_front + cam_pos,
 				cam_up);
-		m1vp = proj * view * model1;
+		mvp = proj * view * model;
 
 		frame_count++;
     }
@@ -369,4 +401,59 @@ void opengl_message_callback(
 			severity_str,
 			id,
 			message);
+}
+
+bool process_event(SDL_Event event, input_controller& icontroller) {
+			switch (event.type) {
+			case SDL_QUIT:
+				return true;
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym) {
+				case SDLK_ESCAPE:
+					return true;
+				case SDLK_w:
+					icontroller.key_down(FORWARD);
+					break;
+				case SDLK_a:
+					icontroller.key_down(LEFT);
+					break;
+				case SDLK_s:
+					icontroller.key_down(BACKWARD);
+					break;
+				case SDLK_d:
+					icontroller.key_down(RIGHT);
+					break;
+				case SDLK_SPACE:
+					icontroller.key_down(UP);
+					break;
+				case SDLK_LSHIFT:
+					icontroller.key_down(DOWN);
+					break;
+				}
+				break;
+			case SDL_KEYUP:
+				switch (event.key.keysym.sym) {
+				case SDLK_w:
+					icontroller.key_up(FORWARD);
+					break;
+				case SDLK_a:
+					icontroller.key_up(LEFT);
+					break;
+				case SDLK_s:
+					icontroller.key_up(BACKWARD);
+					break;
+				case SDLK_d:
+					icontroller.key_up(RIGHT);
+					break;
+				case SDLK_SPACE:
+					icontroller.key_up(UP);
+					break;
+				case SDLK_LSHIFT:
+					icontroller.key_up(DOWN);
+					break;
+				}
+				break;
+			}
+
+			return false;
 }
