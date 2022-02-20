@@ -13,7 +13,9 @@ find_package(glm CONFIG REQUIRED)
 add_executable(it
 	src/main.cpp
 	src/maze.cpp
-	src/input_controller.cpp)
+	src/input_controller.cpp
+	src/shaders.cpp
+	src/minimap.cpp)
 
 target_compile_features(it PRIVATE cxx_std_20)
 

@@ -13,8 +13,8 @@
 #include "SDL_keycode.h"
 #include "input_controller.h"
 #include "maze.h"
-
-#define CODE(...) #__VA_ARGS__
+#include "minimap.h"
+#include "shaders.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -139,77 +139,10 @@ int main(int argc, char** argv) {
 			6 * sizeof(float),
 			(void*)(3 * sizeof(float)));
 
-    // vertex shader
-    const GLchar* vs_code = "#version 450 core\n" CODE(
-        layout (location = 0) in vec3 attrib_pos;
-        layout (location = 1) in vec3 attrib_color;
-
-		out vec4 vertex_color;
-		out vec3 pos;
-
-		uniform mat4 mvp;
-		uniform vec3 cam_pos;
-
-        void main(){
-			vertex_color = vec4(attrib_color, 1.0);
-			vec4 position = mvp * vec4(attrib_pos, 1.0);
-			pos = attrib_pos;
-            gl_Position = position;
-        }
-    );
-
-    unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &vs_code, NULL);
-    glCompileShader(vs);
-
-    int success;
-    char infolog[512];
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-    if(!success){
-        glGetShaderInfoLog(vs, 512, NULL, infolog);
-		std::fprintf(stderr, "%s\n", infolog);
-    }
-
-    // fragment shader
-    const GLchar* fs_code = "#version 450 core\n" CODE(
-		in  vec4 vertex_color;
-		in  vec3 pos;
-        out vec4 color;
-		uniform vec3 cam_pos;
-
-        void main()
-        {
-			float dist = length(pos - cam_pos);
-			dist = dist * dist;
-            color = vertex_color * 50.0 / (dist + 50.0);
-        } 
-    );
-
-    unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fs_code, NULL);
-    glCompileShader(fs);
-
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-    if(!success){
-        glGetShaderInfoLog(fs, 512, NULL, infolog);
-		std::fprintf(stderr, "%s\n", infolog);
-    }
-
-    // create program
-    unsigned int program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if(!success){
-        glGetProgramInfoLog(program, 512, NULL, infolog);
-		std::fprintf(stderr, "%s\n", infolog);
-    }
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
+	GLuint program_ids[PROGRAM_COUNT];
+	if (!compile_shaders_and_link_programs(program_ids)) {
+		return 1;
+	}
 
 	glm::mat4 proj = glm::perspective(
 			glm::radians(90.0f),
@@ -228,9 +161,9 @@ int main(int argc, char** argv) {
 
 	glm::ivec2 dmouse(0);
 
-	GLint mvp_uniform_loc = glGetUniformLocation(program, "mvp");
+	GLint mvp_uniform_loc = glGetUniformLocation(program_ids[PROGRAM_BASIC], "mvp");
 	GLint cam_pos_uniform_loc = glGetUniformLocation(
-													program,
+													program_ids[PROGRAM_BASIC],
 													"cam_pos");
 
 	long long frame_count = 0;
@@ -250,7 +183,7 @@ int main(int argc, char** argv) {
 
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(program);
+        glUseProgram(program_ids[PROGRAM_BASIC]);
 
         glBindVertexArray(vao);
 
@@ -320,7 +253,7 @@ int main(int argc, char** argv) {
 		frame_count++;
     }
 
-    glDeleteProgram(program);
+    glDeleteProgram(program_ids[PROGRAM_BASIC]);
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
