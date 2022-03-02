@@ -22,7 +22,7 @@
 bool process_event(SDL_Event event, input_controller& icontroller);
 
 // quad data
-float quad_vertices[] = {
+float quad_pos[] = {
      0.5f,  0.5f, 0.0f,
     -0.5f,  0.5f, 0.0f,
      0.5f, -0.5f, 0.0f,
@@ -30,6 +30,16 @@ float quad_vertices[] = {
     -0.5f, -0.5f, 0.0f,
      0.5f, -0.5f, 0.0f,
     -0.5f,  0.5f, 0.0f,
+};
+
+float quad_uv[] = {
+	1.0f, 1.0f,
+	0.0f, 1.0f,
+	1.0f, 0.0f,
+
+	0.0f, 0.0f,
+	1.0f, 0.0f,
+	0.0f, 1.0f,
 };
 
 void opengl_message_callback(
@@ -91,7 +101,49 @@ int main(int argc, char** argv) {
 
 	init(window, context);
 
+	GLuint program_ids[PROGRAM_COUNT];
+	if (!compile_shaders_and_link_programs(program_ids)) {
+		return 1;
+	}
 
+
+	minimap_settings minimap = {};
+	minimap.framebuffer_width = WIDTH;
+	minimap.framebuffer_height = HEIGHT;
+	if (!init_minimap_things(minimap)) 
+		return 1;
+	
+	// quad things for minimap
+	GLuint quad_pos_attrib_index = 0;
+	GLuint quad_uv_attrib_index = 1;
+
+	GLuint quad_vao;
+	GLuint quad_pos_vbo;
+	GLuint quad_uv_vbo;
+
+	glGenBuffers(1, &quad_pos_vbo);
+	glGenBuffers(1, &quad_uv_vbo);
+	glGenVertexArrays(1, &quad_vao);
+	
+	glBindVertexArray(quad_vao);	
+	
+	// pos bufffer
+	glBindBuffer(GL_ARRAY_BUFFER, quad_pos_vbo);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(quad_pos),
+				 quad_pos,
+				 GL_STATIC_DRAW);
+	glVertexAttribPointer(quad_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(quad_pos_attrib_index);
+
+	// uv buffer
+	glBindBuffer(GL_ARRAY_BUFFER, quad_uv_vbo);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(quad_uv),
+				 quad_uv,
+				 GL_STATIC_DRAW);
+	glVertexAttribPointer(quad_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(quad_uv_attrib_index);
 
     // create a vertex buffer object and initialize it
     unsigned int vbo;
@@ -139,11 +191,6 @@ int main(int argc, char** argv) {
 			6 * sizeof(float),
 			(void*)(3 * sizeof(float)));
 
-	GLuint program_ids[PROGRAM_COUNT];
-	if (!compile_shaders_and_link_programs(program_ids)) {
-		return 1;
-	}
-
 	glm::mat4 proj = glm::perspective(
 			glm::radians(90.0f),
 			(float) WIDTH / HEIGHT,
@@ -161,6 +208,10 @@ int main(int argc, char** argv) {
 
 	glm::ivec2 dmouse(0);
 
+	glUseProgram(program_ids[PROGRAM_MINIMAP]);
+	glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "color_texture"), 0);
+	glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "depth_texture"), 1);
+    glUseProgram(program_ids[PROGRAM_BASIC]);
 	GLint mvp_uniform_loc = glGetUniformLocation(program_ids[PROGRAM_BASIC], "mvp");
 	GLint cam_pos_uniform_loc = glGetUniformLocation(
 													program_ids[PROGRAM_BASIC],
@@ -180,39 +231,41 @@ int main(int argc, char** argv) {
         while(SDL_PollEvent(&event)) {
 			quit = process_event(event, icontroller);
         }
-
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, minimap.framebuffer_name);
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
         glUseProgram(program_ids[PROGRAM_BASIC]);
-
         glBindVertexArray(vao);
-
 		// send mvp
 		glUniformMatrix4fv(
 				mvp_uniform_loc,
 				1,
 				GL_FALSE,
 				glm::value_ptr(mvp));
-
 		// send cam_pos
 		glUniform3fv(
 				cam_pos_uniform_loc,
 				1,
 				glm::value_ptr(cam_pos));
-
 		// draw maze
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glUseProgram(program_ids[PROGRAM_MINIMAP]);
+		glBindVertexArray(quad_vao);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, minimap.color_texture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, minimap.depth_stencil_texture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(window);
 
-		//model1 = glm::rotate(
-		//		model1,
-		//		0.1f,
-		//		glm::vec3(0.0f, 1.0f, 0.0f));
-		//cam_pos = glm::vec3(
-		//		5.0f,
-		//		10.0f * glm::sin(0.01f * frame_count),
-		//		10.0f * glm::cos(0.01f * frame_count));
 		if (icontroller.is_active(FORWARD)) {
 			cam_pos += speed * cam_front;
 		}

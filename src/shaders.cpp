@@ -73,6 +73,10 @@ bool link_shaders(GLuint shader_ids[SHADER_COUNT],
         if (!success) {
             glGetProgramInfoLog(program_ids[program], 512, NULL, info_log);
             std::fprintf(stderr, "%s\n", info_log);
+            std::fprintf(stderr,
+                         "PROGRAM LINKNING FAILED. PROGRAM: %d\n%s\n",
+                         program,
+                         info_log);
             no_failures = false;
         }
     }

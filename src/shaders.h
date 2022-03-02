@@ -5,8 +5,8 @@
 
 #define SHADER_CODE(...) #__VA_ARGS__
 
-enum shader_names { SHADER_BASIC_VERT, SHADER_BASIC_FRAG, SHADER_COUNT };
-enum program_names { PROGRAM_BASIC, PROGRAM_COUNT };
+enum shader_names { SHADER_BASIC_VERT, SHADER_BASIC_FRAG, SHADER_MINIMAP_VERT, SHADER_MINIMAP_FRAG, SHADER_COUNT };
+enum program_names { PROGRAM_BASIC, PROGRAM_MINIMAP, PROGRAM_COUNT };
 
 /**
  * @brief Shader information before compilation.
@@ -20,7 +20,7 @@ struct pre_shader {
 
 const pre_shader pre_shaders[SHADER_COUNT] = {
     {
-        // SHADER_BASIC_VERT
+        // 0 - SHADER_BASIC_VERT
         GL_VERTEX_SHADER,
         PROGRAM_BASIC,
         "#version 450 core\n" SHADER_CODE(
@@ -41,7 +41,7 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
         }),
     },
     {
-        // SHADER_BASIC_FRAG
+        // 1 - SHADER_BASIC_FRAG
         GL_FRAGMENT_SHADER,
         PROGRAM_BASIC,
         "#version 450 core\n" SHADER_CODE(
@@ -56,11 +56,44 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
             dist = dist * dist;
             color = vertex_color.xyz * 90.0 / (dist + 50.0);
         }),
-    }
+    },
+    {
+        // 2 - SHADER_POST_VERT
+        GL_VERTEX_SHADER,
+        PROGRAM_MINIMAP,
+        "#version 450 core\n" SHADER_CODE(
+        layout (location = 0) in vec3 attrib_pos;
+        layout (location = 1) in vec2 attrib_uv;
+
+        out vec2 uv;
+
+        void main() {
+            gl_Position = vec4(attrib_pos, 1.0);
+            uv = attrib_uv;
+        }),
+    },
+    {
+        // 3 - SHADER_POST_FRAG
+        GL_FRAGMENT_SHADER,
+        PROGRAM_MINIMAP,
+        "#version 450 core\n" SHADER_CODE(
+        in  vec2 uv;
+        out vec4 color;
+
+        uniform sampler2D color_texture;
+        uniform sampler2D depth_texture;
+
+        void main()
+        {
+            vec3 col = texture(color_texture, uv).rgb;
+            color = vec4(col, 1.0);
+        }),
+    },
 };
 
 bool compile_shaders(GLuint shaders_ids[SHADER_COUNT]);
-bool link_shaders(GLuint shader_ids[SHADER_COUNT], GLuint program_ids[PROGRAM_COUNT]);
+bool link_shaders(GLuint shader_ids[SHADER_COUNT],
+                  GLuint program_ids[PROGRAM_COUNT]);
 bool delete_shaders(GLuint shader_ids[SHADER_COUNT]);
 bool compile_shaders_and_link_programs(GLuint program_ids[PROGRAM_COUNT]);
 

@@ -107,20 +107,13 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 		for (int y = 0; y < MAZE_HEIGHT; y++) {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
 
-				if (!(data[x][y][z] & NORTH)) {
-					// North face -> +Z
-					for (int i = 0; i < 6; i++) {
-						vertices.push_back((wall_size / 2) * quad_vertices[i] + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(1.0f, 1.0f, 0.0f));
-					}
-				}
 
 				if (!(data[x][y][z] & WEST)) {
 					// West face -> +X
 					for (int i = 0; i < 6; i++) {
 						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(1.0f, 0.0f, 1.0f));
+						vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
 					}
 				}
 
@@ -129,7 +122,15 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 					for (int i = 0; i < 6; i++) {
 						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.0f, 1.0f, 1.0f));
+						vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+					}
+				}
+
+				if (!(data[x][y][z] & NORTH)) {
+					// North face -> +Z
+					for (int i = 0; i < 6; i++) {
+						vertices.push_back((wall_size / 2) * quad_vertices[i] + wall_size * glm::vec3(x, y, z));
+						vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
 					}
 				}
 			}
