@@ -6,7 +6,7 @@ For both os' you will need CMake. You can change the generator (Makefile, Ninja,
 In the shell run:
 
 	git clone --recursive <this-repo>
-    sudo apt install libx11-dev libxft-dev libxext-dev # or the your package manager
+    sudo apt install libx11-dev libxft-dev libxext-dev # or the equivalent for your package manager
 	./vcpkg/bootstrap-vcpkg.sh
 	./vcpkg/vcpkg install sdl2[x11]:x64-linux
 	mkdir build
