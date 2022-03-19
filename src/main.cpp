@@ -42,6 +42,22 @@ float quad_uv[] = {
 	0.0f, 1.0f,
 };
 
+float arrow_pos[] = {
+    0.0f,  0.0f, 0.0f,
+    1.0f,  0.0f, 0.0f,
+    0.8f,  0.2f, 0.0f,
+    1.0f,  0.0f, 0.0f,
+    0.8f, -0.2f, 0.0f,
+};
+
+float arrow_uv[] = {
+     0.0f, 0.0f,
+     1.0f, 0.0f,
+     0.8f, 0.2f,
+     1.0f, 0.0f,
+    -0.8f, 0.2f,
+};
+
 void opengl_message_callback(
 		GLenum source,
 		GLenum type,
@@ -145,6 +161,38 @@ int main(int argc, char** argv) {
 	glVertexAttribPointer(quad_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(quad_uv_attrib_index);
 
+    // arrow thing
+	GLuint arrow_pos_attrib_index = 0;
+	GLuint arrow_uv_attrib_index = 1;
+
+	GLuint arrow_vao;
+	GLuint arrow_pos_vbo;
+	GLuint arrow_uv_vbo;
+
+	glGenBuffers(1, &arrow_pos_vbo);
+	glGenBuffers(1, &arrow_uv_vbo);
+	glGenVertexArrays(1, &arrow_vao);
+	
+	glBindVertexArray(arrow_vao);	
+	
+	// pos bufffer
+	glBindBuffer(GL_ARRAY_BUFFER, arrow_pos_vbo);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(arrow_pos),
+				 arrow_pos,
+				 GL_STATIC_DRAW);
+	glVertexAttribPointer(arrow_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(arrow_pos_attrib_index);
+
+	// uv buffer
+	glBindBuffer(GL_ARRAY_BUFFER, arrow_uv_vbo);
+	glBufferData(GL_ARRAY_BUFFER,
+				 sizeof(arrow_uv),
+				 arrow_uv,
+				 GL_STATIC_DRAW);
+	glVertexAttribPointer(arrow_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(arrow_uv_attrib_index);
+
     // create a vertex buffer object and initialize it
     unsigned int vbo;
     glGenBuffers(1, &vbo);
@@ -217,6 +265,8 @@ int main(int argc, char** argv) {
 													program_ids[PROGRAM_BASIC],
 													"cam_pos");
 
+    glLineWidth(2.0f);
+
 	long long frame_count = 0;
 
 	float speed = 0.1f;
@@ -249,9 +299,11 @@ int main(int argc, char** argv) {
 				cam_pos_uniform_loc,
 				1,
 				glm::value_ptr(cam_pos));
-		// draw maze
+		// draw maze to framebuffer
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
 		
+        // draw frame
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -263,6 +315,43 @@ int main(int argc, char** argv) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, minimap.depth_stencil_texture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        // draw arrow in perspective, but not in viewport.
+        glBindVertexArray(arrow_vao);
+        glUseProgram(program_ids[PROGRAM_BASIC]);
+        glm::mat4 arrow_model = glm::mat4(1.0f);
+        glm::mat4 arrow_view = glm::lookAt(
+                -3.0f * cam_front,
+				glm::vec3(0.0f, 0.0f, 0.0f),
+				cam_up);
+
+        glm::mat4 arrow_mvp = proj * arrow_view * arrow_model;
+		glUniformMatrix4fv(
+				mvp_uniform_loc,
+				1,
+				GL_FALSE,
+				glm::value_ptr(arrow_mvp));
+		glDrawArrays(GL_LINE_STRIP, 0, 5);
+
+
+        arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        arrow_mvp = proj * arrow_view * arrow_model;
+		glUniformMatrix4fv(
+				mvp_uniform_loc,
+				1,
+				GL_FALSE,
+				glm::value_ptr(arrow_mvp));
+		glDrawArrays(GL_LINE_STRIP, 0, 5);
+
+        arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f,-1.0f, 0.0f));
+        arrow_mvp = proj * arrow_view * arrow_model;
+		glUniformMatrix4fv(
+				mvp_uniform_loc,
+				1,
+				GL_FALSE,
+				glm::value_ptr(arrow_mvp));
+		glDrawArrays(GL_LINE_STRIP, 0, 5);
+
 
         SDL_GL_SwapWindow(window);
 
@@ -297,7 +386,7 @@ int main(int argc, char** argv) {
 		cam_front = glm::rotate(glm::rotate(cam_front, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
 		cam_up = glm::cross(cam_right, cam_front);
 		
-		glm::mat4 view = glm::lookAt(
+		view = glm::lookAt(
 				cam_pos,
 				cam_front + cam_pos,
 				cam_up);

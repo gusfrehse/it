@@ -6,24 +6,24 @@
 
 #include "maze.h"
 
-#define SOUTH 0x01
-#define NORTH 0x02
-#define WEST  0x04
-#define EAST  0x08
-#define UP    0x10
-#define DOWN  0x20
+#define ZPOSITIVE 0x01
+#define ZNEGATIVE 0x02
+#define XNEGATIVE 0x04
+#define XPOSITIVE 0x08
+#define YPOSITIVE 0x10
+#define YNEGATIVE 0x20
 
 std::random_device rd;
 std::mt19937 rng(rd());
 
 uint32_t opposite(uint32_t d) {
 	switch (d) {
-		case SOUTH: return NORTH;
-		case NORTH: return SOUTH;
-		case WEST:  return EAST;
-		case EAST:  return WEST;
-		case UP:    return DOWN;
-		case DOWN:  return UP;
+		case ZPOSITIVE: return ZNEGATIVE;
+		case ZNEGATIVE: return ZPOSITIVE;
+		case XNEGATIVE: return XPOSITIVE;
+		case XPOSITIVE: return XNEGATIVE;
+		case YPOSITIVE: return YNEGATIVE;
+		case YNEGATIVE: return YPOSITIVE;
 		default:
 			std::fprintf(
 					stderr,
@@ -35,12 +35,12 @@ uint32_t opposite(uint32_t d) {
 
 glm::ivec3 direction(uint32_t d) {
 	switch (d) {
-		case SOUTH: return glm::ivec3(  0,  1,  0);
-		case NORTH: return glm::ivec3(  0, -1,  0);
-		case EAST:  return glm::ivec3(  1,  0,  0);
-		case WEST:  return glm::ivec3( -1,  0,  0);
-		case UP:    return glm::ivec3(  0,  0,  1);
-		case DOWN:  return glm::ivec3(  0,  0, -1);
+		case ZPOSITIVE: return glm::ivec3(  0,  1,  0);
+		case ZNEGATIVE: return glm::ivec3(  0, -1,  0);
+		case XPOSITIVE: return glm::ivec3(  1,  0,  0);
+		case XNEGATIVE: return glm::ivec3( -1,  0,  0);
+		case YPOSITIVE: return glm::ivec3(  0,  0,  1);
+		case YNEGATIVE: return glm::ivec3(  0,  0, -1);
 		default:
 			std::fprintf(
 					stderr,
@@ -65,7 +65,7 @@ void shuffle(std::vector<T>& v) {
 maze::maze() : data{0} {}
 
 void maze::construct(glm::ivec3 start) {
-	std::vector dirs{ SOUTH, NORTH, WEST, EAST, UP, DOWN };
+	std::vector dirs{ ZPOSITIVE, ZNEGATIVE, XNEGATIVE, XPOSITIVE, YPOSITIVE, YNEGATIVE };
 
 	shuffle(dirs);
 
@@ -108,27 +108,28 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
 
 
-				if (!(data[x][y][z] & WEST)) {
-					// West face -> +X
+				if (!(data[x][y][z] & XNEGATIVE)) {
+					// West face -> -X
 					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
 						vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
 					}
 				}
 
-				if (!(data[x][y][z] & DOWN)) {
-					// Down face -> +Y
+				if (!(data[x][y][z] & YNEGATIVE)) {
+					// Down face -> -Y
 					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
 						vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
 					}
 				}
 
-				if (!(data[x][y][z] & NORTH)) {
-					// North face -> +Z
+				if (!(data[x][y][z] & ZNEGATIVE)) {
+					// North face -> -Z
 					for (int i = 0; i < 6; i++) {
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * quad_vertices[i] + wall_size * glm::vec3(x, y, z));
 						vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
 					}
@@ -141,6 +142,7 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 }
 
 void maze::print() const {
+    /*
 	for (int z = 0; z < MAZE_LENGTH; z++) {
 		for (int i = 0; i < MAZE_WIDTH; i++)
 			std::printf("__");
@@ -151,10 +153,10 @@ void maze::print() const {
 			std::putchar('|');
 
 			for (int x = 0; x < MAZE_WIDTH; x++) {
-				std::putchar((data[x][y][z] & SOUTH) != 0 ? ' ' : '_');
+				std::putchar((data[x][y][z] & ZPOSITIVE) != 0 ? ' ' : '_');
 
-				if ((data[x][y][z] & EAST) != 0) {
-					std::putchar((((data[x][y][z] | data[x + 1][y][z]) & SOUTH) != 0) ? ' ' : '_');
+				if ((data[x][y][z] & XPOSITIVE) != 0) {
+					std::putchar((((data[x][y][z] | data[x + 1][y][z]) & ZPOSITIVE) != 0) ? ' ' : '_');
 				} else {
 					std::putchar('|');
 				}
@@ -162,4 +164,61 @@ void maze::print() const {
 			std::putchar('\n');
 		}
 	}
+    */
+
+
+    // nine by nine, very ugly probably.
+    for (int y = 0; y < MAZE_HEIGHT; y++) {
+        std::printf("\n\nY: %d\n", y);
+        for (int z = 0; z < MAZE_HEIGHT; z++) {
+
+            // top line
+            for (int x = 0; x < MAZE_WIDTH; x++) {
+                std::putchar('+');
+
+                if (data[x][y][z] & ZNEGATIVE)
+                    std::putchar('.');
+                else
+                    std::putchar('-');
+            }
+
+            std::putchar('+');
+            std::putchar('\n');
+
+            if (data[0][y][z] & XNEGATIVE)
+                std::putchar('.');
+            else
+                std::putchar('|');
+
+            // bottom line
+            for (int x = 0; x < MAZE_WIDTH; x++) {
+                if ((data[x][y][z] & YPOSITIVE) && (data[x][y][z] & YNEGATIVE))
+                    std::putchar('B');
+                else if (data[x][y][z] & YPOSITIVE)
+                    std::putchar('U');
+                else if (data[x][y][z] & YNEGATIVE)
+                    std::putchar('D');
+                else 
+                    std::putchar('.');
+
+                if (data[x][y][z] & XPOSITIVE)
+                    std::putchar('.');
+                else
+                    std::putchar('|');
+            }
+
+            std::putchar('\n');
+        }
+
+        for (int x = 0; x < MAZE_WIDTH; x++) {
+            std::putchar('+');
+            
+            if (data[x][y][MAZE_LENGTH - 1] & ZPOSITIVE)
+                std::putchar('.');
+            else
+                std::putchar('-');
+        }
+
+        std::putchar('+');
+    }
 }
