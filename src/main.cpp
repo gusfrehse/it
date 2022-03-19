@@ -50,12 +50,12 @@ float arrow_pos[] = {
     0.8f, -0.2f, 0.0f,
 };
 
-float arrow_uv[] = {
-     0.0f, 0.0f,
-     1.0f, 0.0f,
-     0.8f, 0.2f,
-     1.0f, 0.0f,
-    -0.8f, 0.2f,
+float arrow_color[] = {
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
 };
 
 void opengl_message_callback(
@@ -163,14 +163,14 @@ int main(int argc, char** argv) {
 
     // arrow thing
 	GLuint arrow_pos_attrib_index = 0;
-	GLuint arrow_uv_attrib_index = 1;
+	GLuint arrow_color_attrib_index = 1;
 
 	GLuint arrow_vao;
 	GLuint arrow_pos_vbo;
-	GLuint arrow_uv_vbo;
+	GLuint arrow_color_vbo;
 
 	glGenBuffers(1, &arrow_pos_vbo);
-	glGenBuffers(1, &arrow_uv_vbo);
+	glGenBuffers(1, &arrow_color_vbo);
 	glGenVertexArrays(1, &arrow_vao);
 	
 	glBindVertexArray(arrow_vao);	
@@ -185,13 +185,20 @@ int main(int argc, char** argv) {
 	glEnableVertexAttribArray(arrow_pos_attrib_index);
 
 	// uv buffer
-	glBindBuffer(GL_ARRAY_BUFFER, arrow_uv_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, arrow_color_vbo);
 	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(arrow_uv),
-				 arrow_uv,
+				 sizeof(arrow_color),
+				 arrow_color,
 				 GL_STATIC_DRAW);
-	glVertexAttribPointer(arrow_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(arrow_uv_attrib_index);
+	glVertexAttribPointer(
+			arrow_color_attrib_index,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			6 * sizeof(float),
+			(void*)(3 * sizeof(float)));
+	glVertexAttribPointer(arrow_color_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(arrow_color_attrib_index);
 
     // create a vertex buffer object and initialize it
     unsigned int vbo;
@@ -319,13 +326,15 @@ int main(int argc, char** argv) {
         // draw arrow in perspective, but not in viewport.
         glBindVertexArray(arrow_vao);
         glUseProgram(program_ids[PROGRAM_BASIC]);
+
+        glm::mat4 arrow_shift = glm::translate(glm::vec3(0.8f,-0.8f, 0.0f));
         glm::mat4 arrow_model = glm::mat4(1.0f);
         glm::mat4 arrow_view = glm::lookAt(
-                -3.0f * cam_front,
+                -5.0f * cam_front,
 				glm::vec3(0.0f, 0.0f, 0.0f),
 				cam_up);
 
-        glm::mat4 arrow_mvp = proj * arrow_view * arrow_model;
+        glm::mat4 arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
 		glUniformMatrix4fv(
 				mvp_uniform_loc,
 				1,
@@ -333,9 +342,8 @@ int main(int argc, char** argv) {
 				glm::value_ptr(arrow_mvp));
 		glDrawArrays(GL_LINE_STRIP, 0, 5);
 
-
         arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        arrow_mvp = proj * arrow_view * arrow_model;
+        arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
 		glUniformMatrix4fv(
 				mvp_uniform_loc,
 				1,
@@ -344,7 +352,7 @@ int main(int argc, char** argv) {
 		glDrawArrays(GL_LINE_STRIP, 0, 5);
 
         arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f,-1.0f, 0.0f));
-        arrow_mvp = proj * arrow_view * arrow_model;
+        arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
 		glUniformMatrix4fv(
 				mvp_uniform_loc,
 				1,
