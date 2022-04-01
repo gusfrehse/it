@@ -5,9 +5,9 @@
 
 #include <vector>
 
-#define MAZE_WIDTH  2
-#define MAZE_HEIGHT 2
-#define MAZE_LENGTH 2
+#define MAZE_WIDTH  10
+#define MAZE_HEIGHT 10
+#define MAZE_LENGTH 10
 
 class maze {
 	uint32_t data[MAZE_WIDTH][MAZE_HEIGHT][MAZE_LENGTH];

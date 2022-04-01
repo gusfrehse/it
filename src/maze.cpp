@@ -6,24 +6,24 @@
 
 #include "maze.h"
 
-#define ZPOSITIVE 0x01
-#define ZNEGATIVE 0x02
-#define XNEGATIVE 0x04
-#define XPOSITIVE 0x08
-#define YPOSITIVE 0x10
-#define YNEGATIVE 0x20
+#define XPOSITIVE 0x01
+#define XNEGATIVE 0x02
+#define YPOSITIVE 0x04
+#define YNEGATIVE 0x08
+#define ZPOSITIVE 0x10
+#define ZNEGATIVE 0x20
 
 std::random_device rd;
 std::mt19937 rng(rd());
 
 uint32_t opposite(uint32_t d) {
 	switch (d) {
-		case ZPOSITIVE: return ZNEGATIVE;
-		case ZNEGATIVE: return ZPOSITIVE;
 		case XNEGATIVE: return XPOSITIVE;
 		case XPOSITIVE: return XNEGATIVE;
 		case YPOSITIVE: return YNEGATIVE;
 		case YNEGATIVE: return YPOSITIVE;
+		case ZPOSITIVE: return ZNEGATIVE;
+		case ZNEGATIVE: return ZPOSITIVE;
 		default:
 			std::fprintf(
 					stderr,
@@ -35,12 +35,12 @@ uint32_t opposite(uint32_t d) {
 
 glm::ivec3 direction(uint32_t d) {
 	switch (d) {
-		case ZPOSITIVE: return glm::ivec3(  0,  1,  0);
-		case ZNEGATIVE: return glm::ivec3(  0, -1,  0);
 		case XPOSITIVE: return glm::ivec3(  1,  0,  0);
 		case XNEGATIVE: return glm::ivec3( -1,  0,  0);
-		case YPOSITIVE: return glm::ivec3(  0,  0,  1);
-		case YNEGATIVE: return glm::ivec3(  0,  0, -1);
+		case YPOSITIVE: return glm::ivec3(  0,  1,  0);
+		case YNEGATIVE: return glm::ivec3(  0, -1,  0);
+		case ZPOSITIVE: return glm::ivec3(  0,  0,  1);
+		case ZNEGATIVE: return glm::ivec3(  0,  0, -1);
 		default:
 			std::fprintf(
 					stderr,
@@ -65,7 +65,7 @@ void shuffle(std::vector<T>& v) {
 maze::maze() : data{0} {}
 
 void maze::construct(glm::ivec3 start) {
-	std::vector dirs{ ZPOSITIVE, ZNEGATIVE, XNEGATIVE, XPOSITIVE, YPOSITIVE, YNEGATIVE };
+	std::vector dirs{ XPOSITIVE, XNEGATIVE, YPOSITIVE, YNEGATIVE, ZPOSITIVE, ZNEGATIVE };
 
 	shuffle(dirs);
 
@@ -107,33 +107,59 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 		for (int y = 0; y < MAZE_HEIGHT; y++) {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
 
-
 				if (!(data[x][y][z] & XNEGATIVE)) {
 					// West face -> -X
 					for (int i = 0; i < 6; i++) {
 						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+						vertices.push_back(glm::vec3(0.5f, 0.0f, 0.0f));
 					}
 				}
+
+				//if (!(data[x][y][z] & XPOSITIVE)) {
+				//	// West face -> -X
+				//	for (int i = 0; i < 6; i++) {
+				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians( 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+				//		vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+				//	}
+				//}
 
 				if (!(data[x][y][z] & YNEGATIVE)) {
 					// Down face -> -Y
 					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+						vertices.push_back(glm::vec3(0.0f, 0.5f, 0.0f));
 					}
 				}
+
+				//if (!(data[x][y][z] & YPOSITIVE)) {
+				//	// Down face -> -Y
+				//	for (int i = 0; i < 6; i++) {
+				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+				//		vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+				//	}
+				//}
 
 				if (!(data[x][y][z] & ZNEGATIVE)) {
 					// North face -> -Z
 					for (int i = 0; i < 6; i++) {
 						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-						vertices.push_back((wall_size / 2) * quad_vertices[i] + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+						vertices.push_back(glm::vec3(0.0f, 0.0f, 0.5f));
 					}
 				}
+
+				//if (!(data[x][y][z] & ZPOSITIVE)) {
+				//	// North face -> -Z
+				//	for (int i = 0; i < 6; i++) {
+				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+				//		vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+				//	}
+				//}
 			}
 		}
 	}
@@ -220,5 +246,27 @@ void maze::print() const {
         }
 
         std::putchar('+');
+    }
+    std::printf("\n");
+
+    for (int x = 0; x < MAZE_WIDTH; x++) {
+        for (int y = 0; y < MAZE_HEIGHT; y++) {
+            for (int z = 0; z < MAZE_HEIGHT; z++) {
+                std::printf("%d %d %d: ", x, y, z);
+                if (data[x][y][z] & XPOSITIVE)
+                    std::printf("XPOSITIVE ");
+                if (data[x][y][z] & XNEGATIVE)
+                    std::printf("XNEGATIVE ");
+                if (data[x][y][z] & YPOSITIVE)
+                    std::printf("YPOSITIVE ");
+                if (data[x][y][z] & YNEGATIVE)
+                    std::printf("YNEGATIVE ");
+                if (data[x][y][z] & ZPOSITIVE)
+                    std::printf("ZPOSITIVE ");
+                if (data[x][y][z] & ZNEGATIVE)
+                    std::printf("ZNEGATIVE ");
+                std::printf("\n");
+            }
+        }
     }
 }
