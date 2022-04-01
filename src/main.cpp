@@ -78,7 +78,7 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
 
     // create window
     window = SDL_CreateWindow(
-			"Modern Opengl",
+			"it",
 			SDL_WINDOWPOS_UNDEFINED,
 			SDL_WINDOWPOS_UNDEFINED,
 			WIDTH,
