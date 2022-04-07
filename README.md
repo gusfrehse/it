@@ -4,29 +4,22 @@ For both os' you will need CMake. You can change the generator
 (Makefile, Ninja, Visual Studio, etc..) in the first call to CMake,
 passing the `-G <generator>` argument.
 
-## Linux
-In the shell run:
+## Specially for Linux
+Comment the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` and uncomment
+the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` in the `CMakeLists.txt` file.
 
-	git clone --recursive <this-repo>
+Then, in the shell run:
+    
     sudo apt install libx11-dev libxft-dev libxext-dev # or the equivalent for your package manager
-	./vcpkg/bootstrap-vcpkg.sh
-	./vcpkg/vcpkg install sdl2[x11]:x64-linux
-	mkdir build
-	cmake -S . -B build
-	cmake --build build
 
-The executable will be at `./build/it`
+## Windows and Linux
+You will need Visual Studio (or the `cl.exe` compiler) for windows and a C compiler for linux.
 
-## Windows
-You will need Visual Studio (or the `cl.exe` compiler).
-In the cmd run:
+Run:
 
-	git clone --recursive <this-repo>
-	./vcpkg/bootstrap-vcpkg.sh
-	./vcpkg/vcpkg install sdl2:x64-windows
-	mkdir build
-	cmake -S . -B build
-	cmake --build build
+    git clone --recursive <this-repo>
+    mkdir build
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+    cmake --build build
 
-The executable will be somewhere inside `.\\build\\`, depends where
-Visual Studio put it.
+The executable will be somewhere inside the `build` directory.
