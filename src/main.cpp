@@ -86,7 +86,7 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
 			SDL_WINDOW_OPENGL);
     context = SDL_GL_CreateContext(window);
 
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(0);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
