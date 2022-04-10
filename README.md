@@ -9,7 +9,7 @@ Comment the `set(VCPKG_TARGET_TRIPLET x64-windows-static)`, uncomment
 the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` and comment the
 `WIN32`, all in the `CMakeLists.txt` file.
 
-Then, in the shell run:
+Then, in the shell, run:
     
     sudo apt install libx11-dev libxft-dev libxext-dev # or the equivalent for your package manager
 
