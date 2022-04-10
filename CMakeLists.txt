@@ -16,7 +16,7 @@ find_package(GLEW REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 add_executable(it
-    WIN32
+    #    WIN32
 	src/main.cpp
 	src/maze.cpp
 	src/input_controller.cpp

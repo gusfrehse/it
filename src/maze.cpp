@@ -16,6 +16,8 @@
 std::random_device rd;
 std::mt19937 rng(rd());
 
+static void append_wall(std::vector<glm::vec3> &vertices, int d, float wall_size, int x, int y, int z);
+	
 uint32_t opposite(uint32_t d) {
 	switch (d) {
 		case XNEGATIVE: return XPOSITIVE;
@@ -41,6 +43,41 @@ glm::ivec3 direction(uint32_t d) {
 		case YNEGATIVE: return glm::ivec3(  0, -1,  0);
 		case ZPOSITIVE: return glm::ivec3(  0,  0,  1);
 		case ZNEGATIVE: return glm::ivec3(  0,  0, -1);
+		default:
+			std::fprintf(
+					stderr,
+					"ERROR: Maze: no direction vector for %x\n",
+					d);
+			return glm::ivec3(0);
+	}
+}
+
+static float quad_angle_to_rotate(int d) {
+	switch (d) {
+		case XPOSITIVE: return  90.0f;
+		case XNEGATIVE: return -90.0f;
+		case YPOSITIVE: return -90.0f;
+		case YNEGATIVE: return  90.0f;
+		case ZPOSITIVE: return   0.0f;
+		case ZNEGATIVE: return 180.0f;
+		default:
+			std::fprintf(
+					stderr,
+					"ERROR: Maze: no angle for %x\n",
+					d);
+			return 0.0f;
+	}
+	
+}
+
+static glm::vec3 quad_vector_to_rotate(uint32_t d) {
+	switch (d) {
+		case XPOSITIVE: return glm::vec3( 0, 1, 0);
+		case XNEGATIVE: return glm::vec3( 0, 1, 0);
+		case YPOSITIVE: return glm::vec3( 1, 0, 0);
+		case YNEGATIVE: return glm::vec3( 1, 0, 0);
+		case ZPOSITIVE: return glm::vec3( 0, 1, 0);
+		case ZNEGATIVE: return glm::vec3( 0, 1, 0);
 		default:
 			std::fprintf(
 					stderr,
@@ -91,15 +128,6 @@ bool maze::in_bounds(glm::ivec3 p) const {
 }
 
 std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
-	glm::vec3 quad_vertices[] = {
-		glm::vec3( 1.0f,  1.0f,  1.0f),
-		glm::vec3(-1.0f,  1.0f,  1.0f),
-		glm::vec3( 1.0f, -1.0f,  1.0f),
-
-		glm::vec3(-1.0f, -1.0f,  1.0f),
-		glm::vec3( 1.0f, -1.0f,  1.0f),
-		glm::vec3(-1.0f,  1.0f,  1.0f),
-	};
 
 	std::vector<glm::vec3> vertices;
 
@@ -108,63 +136,62 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
 
 				if (!(data[x][y][z] & XNEGATIVE)) {
-					// West face -> -X
-					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.5f, 0.0f, 0.0f));
-					}
+					append_wall(vertices, XNEGATIVE, wall_size, x, y, z);
 				}
-
-				//if (!(data[x][y][z] & XPOSITIVE)) {
-				//	// West face -> -X
-				//	for (int i = 0; i < 6; i++) {
-				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians( 90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-				//		vertices.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
-				//	}
-				//}
-
+				
 				if (!(data[x][y][z] & YNEGATIVE)) {
-					// Down face -> -Y
-					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.0f, 0.5f, 0.0f));
-					}
+					append_wall(vertices, YNEGATIVE, wall_size, x, y, z);
 				}
-
-				//if (!(data[x][y][z] & YPOSITIVE)) {
-				//	// Down face -> -Y
-				//	for (int i = 0; i < 6; i++) {
-				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-				//		vertices.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-				//	}
-				//}
 
 				if (!(data[x][y][z] & ZNEGATIVE)) {
-					// North face -> -Z
-					for (int i = 0; i < 6; i++) {
-						glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-						vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-						vertices.push_back(glm::vec3(0.0f, 0.0f, 0.5f));
-					}
+					append_wall(vertices, ZNEGATIVE, wall_size, x, y, z);
 				}
-
-				//if (!(data[x][y][z] & ZPOSITIVE)) {
-				//	// North face -> -Z
-				//	for (int i = 0; i < 6; i++) {
-				//		glm::vec3 vertex = glm::rotate(quad_vertices[i], glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				//		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
-				//		vertices.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-				//	}
-				//}
 			}
 		}
 	}
-
+	
+	// xpositive wall
+	for (int y = 0; y < MAZE_HEIGHT; y++) {
+		for (int z = 0; z < MAZE_LENGTH; z++) {
+			append_wall(vertices, XPOSITIVE, wall_size, MAZE_WIDTH - 1, y, z);
+			}
+	}
+	
+	// ypositive wall
+	for (int x = 0; x < MAZE_WIDTH; x++) {
+		for (int z = 0; z < MAZE_LENGTH; z++) {
+			append_wall(vertices, YPOSITIVE, wall_size, x, MAZE_HEIGHT - 1, z);
+			}
+	}
+	
+	// zpositive wall
+	for (int x = 0; x < MAZE_WIDTH; x++) {
+		for (int y = 0; y < MAZE_HEIGHT; y++) {
+			append_wall(vertices, ZPOSITIVE, wall_size, x, y, MAZE_LENGTH - 1);
+			}
+	}
+	
 	return vertices;
+}
+
+static void append_wall(std::vector<glm::vec3> &vertices, int d, float wall_size, int x, int y, int z) {
+	const glm::vec3 quad_vertices[] = {
+		glm::vec3( 1.0f,  1.0f,  1.0f),
+		glm::vec3(-1.0f,  1.0f,  1.0f),
+		glm::vec3( 1.0f, -1.0f,  1.0f),
+
+		glm::vec3(-1.0f, -1.0f,  1.0f),
+		glm::vec3( 1.0f, -1.0f,  1.0f),
+		glm::vec3(-1.0f,  1.0f,  1.0f),
+	};
+	
+	for (int i = 0; i < 6; i++) {
+		float angle = glm::radians(quad_angle_to_rotate(d));
+		glm::vec3 dir = quad_vector_to_rotate(d);
+		glm::vec3 vertex = glm::rotate(quad_vertices[i], angle, dir);
+		vertices.push_back((wall_size / 2) * vertex + wall_size * glm::vec3(x, y, z));
+		vertices.push_back((glm::vec3)glm::abs(direction(d)));
+	}
 }
 
 void maze::print() const {
