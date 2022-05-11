@@ -33,13 +33,13 @@ float quad_pos[] = {
 };
 
 float quad_uv[] = {
-	1.0f, 1.0f,
-	0.0f, 1.0f,
-	1.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    1.0f, 0.0f,
 
-	0.0f, 0.0f,
-	1.0f, 0.0f,
-	0.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
 };
 
 float arrow_pos[] = {
@@ -59,269 +59,275 @@ float arrow_color[] = {
 };
 
 void opengl_message_callback(
-		GLenum source,
-		GLenum type,
-		GLuint id,
-		GLenum severity,
-		GLsizei length,
-		GLchar const* message,
-		void const* user_param);
+        GLenum source,
+        GLenum type,
+        GLuint id,
+        GLenum severity,
+        GLsizei length,
+        GLchar const* message,
+        void const* user_param);
 
 void init(SDL_Window*& window, SDL_GLContext& context) {
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(
-			SDL_GL_CONTEXT_PROFILE_MASK,
-			SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_CONTEXT_PROFILE_MASK,
+            SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 
     // create window
     window = SDL_CreateWindow(
-			"it",
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			WIDTH,
-			HEIGHT,
-			SDL_WINDOW_OPENGL);
+            "it",
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            WIDTH,
+            HEIGHT,
+            SDL_WINDOW_OPENGL);
     context = SDL_GL_CreateContext(window);
 
     SDL_GL_SetSwapInterval(0);
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
-	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		std::fprintf(
-				stderr,
-				"glew error: %s\n",
-				glewGetErrorString(err));
-		std::exit(1);
-	}
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::fprintf(
+                stderr,
+                "glew error: %s\n",
+                glewGetErrorString(err));
+        std::exit(1);
+    }
 
-	glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
-	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(opengl_message_callback, nullptr);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(opengl_message_callback, nullptr);
     glViewport(0, 0, WIDTH, HEIGHT);
 }
 
 int main(int argc, char** argv) {
-	maze m;
-	m.construct(glm::ivec3(0));
-	m.print();
-	auto vertices = m.gen_vertices(10.0f);
+    maze m;
+    m.construct(glm::ivec3(0));
+    m.print();
+    auto maze_pos = m.gen_vertices(10.0f);
 
-	SDL_Window* window;
-	SDL_GLContext context;
+    SDL_Window* window;
+    SDL_GLContext context;
 
-	init(window, context);
+    init(window, context);
 
-	GLuint program_ids[PROGRAM_COUNT];
-	if (!compile_shaders_and_link_programs(program_ids)) {
-		return 1;
-	}
+    GLuint program_ids[PROGRAM_COUNT];
+    if (!compile_shaders_and_link_programs(program_ids)) {
+        return 1;
+    }
 
 
-	minimap_settings minimap = {};
-	minimap.framebuffer_width = WIDTH;
-	minimap.framebuffer_height = HEIGHT;
-	if (!init_minimap_things(minimap)) 
-		return 1;
-	
-	// quad things for minimap
-	GLuint quad_pos_attrib_index = 0;
-	GLuint quad_uv_attrib_index = 1;
+    minimap_settings minimap = {};
+    minimap.framebuffer_width = WIDTH;
+    minimap.framebuffer_height = HEIGHT;
+    if (!init_minimap_things(minimap)) 
+        return 1;
+    
+    // quad things for minimap
+    GLuint quad_vao;
+    GLuint quad_pos_vbo;
+    GLuint quad_uv_vbo;
+    {
+        GLuint quad_pos_attrib_index = 0;
+        GLuint quad_uv_attrib_index = 1;
 
-	GLuint quad_vao;
-	GLuint quad_pos_vbo;
-	GLuint quad_uv_vbo;
+        glGenBuffers(1, &quad_pos_vbo);
+        glGenBuffers(1, &quad_uv_vbo);
+        glGenVertexArrays(1, &quad_vao);
+    
+        glBindVertexArray(quad_vao);    
+    
+        // pos bufffer
+        glBindBuffer(GL_ARRAY_BUFFER, quad_pos_vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(quad_pos),
+                     quad_pos,
+                     GL_STATIC_DRAW);
+        glVertexAttribPointer(quad_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(quad_pos_attrib_index);
 
-	glGenBuffers(1, &quad_pos_vbo);
-	glGenBuffers(1, &quad_uv_vbo);
-	glGenVertexArrays(1, &quad_vao);
-	
-	glBindVertexArray(quad_vao);	
-	
-	// pos bufffer
-	glBindBuffer(GL_ARRAY_BUFFER, quad_pos_vbo);
-	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(quad_pos),
-				 quad_pos,
-				 GL_STATIC_DRAW);
-	glVertexAttribPointer(quad_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(quad_pos_attrib_index);
+        // uv buffer
+        glBindBuffer(GL_ARRAY_BUFFER, quad_uv_vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(quad_uv),
+                     quad_uv,
+                     GL_STATIC_DRAW);
+        glVertexAttribPointer(quad_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(quad_uv_attrib_index);
+    }
+    
+    // arrow vao
+    GLuint arrow_vao;
+    GLuint arrow_pos_vbo;
+    GLuint arrow_color_vbo;
+    {
+    
+        GLuint arrow_pos_attrib_index = 0;
+        GLuint arrow_color_attrib_index = 1;
 
-	// uv buffer
-	glBindBuffer(GL_ARRAY_BUFFER, quad_uv_vbo);
-	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(quad_uv),
-				 quad_uv,
-				 GL_STATIC_DRAW);
-	glVertexAttribPointer(quad_uv_attrib_index, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(quad_uv_attrib_index);
 
-    // arrow thing
-	GLuint arrow_pos_attrib_index = 0;
-	GLuint arrow_color_attrib_index = 1;
+        glGenBuffers(1, &arrow_pos_vbo);
+        glGenBuffers(1, &arrow_color_vbo);
+        glGenVertexArrays(1, &arrow_vao);
+    
+        glBindVertexArray(arrow_vao);   
+    
+        // pos bufffer
+        glBindBuffer(GL_ARRAY_BUFFER, arrow_pos_vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(arrow_pos),
+                     arrow_pos,
+                     GL_STATIC_DRAW);
+        glVertexAttribPointer(arrow_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(arrow_pos_attrib_index);
 
-	GLuint arrow_vao;
-	GLuint arrow_pos_vbo;
-	GLuint arrow_color_vbo;
+        // uv buffer
+        glBindBuffer(GL_ARRAY_BUFFER, arrow_color_vbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(arrow_color),
+                     arrow_color,
+                     GL_STATIC_DRAW);
+        glVertexAttribPointer(
+                arrow_color_attrib_index,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                6 * sizeof(float),
+                (void*)(3 * sizeof(float)));
+        
+        glVertexAttribPointer(arrow_color_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(arrow_color_attrib_index);
+    }
+    
+    unsigned int maze_pos_vao;
+    unsigned int maze_pos_vbo;
+    {
+        // create a vertex buffer object and initialize it
+        glGenBuffers(1, &maze_pos_vbo);
 
-	glGenBuffers(1, &arrow_pos_vbo);
-	glGenBuffers(1, &arrow_color_vbo);
-	glGenVertexArrays(1, &arrow_vao);
-	
-	glBindVertexArray(arrow_vao);	
-	
-	// pos bufffer
-	glBindBuffer(GL_ARRAY_BUFFER, arrow_pos_vbo);
-	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(arrow_pos),
-				 arrow_pos,
-				 GL_STATIC_DRAW);
-	glVertexAttribPointer(arrow_pos_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(arrow_pos_attrib_index);
+        // create a vertex array object
+        glGenVertexArrays(1, &maze_pos_vao);
 
-	// uv buffer
-	glBindBuffer(GL_ARRAY_BUFFER, arrow_color_vbo);
-	glBufferData(GL_ARRAY_BUFFER,
-				 sizeof(arrow_color),
-				 arrow_color,
-				 GL_STATIC_DRAW);
-	glVertexAttribPointer(
-			arrow_color_attrib_index,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			6 * sizeof(float),
-			(void*)(3 * sizeof(float)));
-	glVertexAttribPointer(arrow_color_attrib_index, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(arrow_color_attrib_index);
+        // bind vao
+        glBindVertexArray(maze_pos_vao);
 
-    // create a vertex buffer object and initialize it
-    unsigned int vbo;
-    glGenBuffers(1, &vbo);
+        // bind vbo to current array_buffer
+        glBindBuffer(GL_ARRAY_BUFFER, maze_pos_vbo);
 
-    // create a vertex array object
-	unsigned int vao;
-    glGenVertexArrays(1, &vao);
+        // set the data of the current array_buffer
+        glBufferData(
+                GL_ARRAY_BUFFER,
+                maze_pos.size() * sizeof(glm::vec3),
+                maze_pos.data(),
+                GL_DYNAMIC_DRAW);
 
-	// bind vao
-    glBindVertexArray(vao);
+        // in shader: (location = vertex_attrib_index)
+        GLuint maze_vertex_attrib_index = 0;
+        GLuint maze_color_attrib_index = 1;
 
-	// bind vbo to current array_buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        // enable attrib
+        glEnableVertexAttribArray(maze_vertex_attrib_index);
+        glEnableVertexAttribArray(maze_color_attrib_index);
 
-	// set the data of the current array_buffer
-    glBufferData(
-			GL_ARRAY_BUFFER,
-			vertices.size() * sizeof(glm::vec3),
-			vertices.data(),
-			GL_DYNAMIC_DRAW);
+        // show opengl how to interpret the attrib
+        glVertexAttribPointer(
+                maze_vertex_attrib_index,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                6 * sizeof(float),
+                (void*)0);
 
-    // in shader: (location = vertex_attrib_index)
-	GLuint vertex_attrib_index = 0;
-	GLuint color_attrib_index = 1;
+        glVertexAttribPointer(
+                maze_color_attrib_index,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                6 * sizeof(float),
+                (void*)(3 * sizeof(float)));
+    }
 
-    // enable attrib
-	glEnableVertexAttribArray(vertex_attrib_index);
-	glEnableVertexAttribArray(color_attrib_index);
+    glm::mat4 proj = glm::perspective(
+            glm::radians(90.0f),
+            (float) WIDTH / HEIGHT,
+            0.1f,
+            100.0f);
 
-    // show opengl how to interpret the attrib
-	glVertexAttribPointer(
-			vertex_attrib_index,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			6 * sizeof(float),
-			(void*)0);
+    glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 cam_front = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cam_right = glm::cross(cam_front, cam_up);
+    glm::mat4 view = glm::lookAt(cam_pos, glm::vec3(0.0f), cam_up);
+    glm::vec3 model_pos = glm::vec3(0.0f);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), model_pos);
+    glm::mat4 mvp = proj * view * model;
 
-	glVertexAttribPointer(
-			color_attrib_index,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			6 * sizeof(float),
-			(void*)(3 * sizeof(float)));
+    glm::ivec2 dmouse(0);
 
-	glm::mat4 proj = glm::perspective(
-			glm::radians(90.0f),
-			(float) WIDTH / HEIGHT,
-			0.1f,
-			100.0f);
-
-	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-	glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::vec3 cam_front = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 cam_right = glm::cross(cam_front, cam_up);
-	glm::mat4 view = glm::lookAt(cam_pos, glm::vec3(0.0f), cam_up);
-	glm::vec3 model_pos = glm::vec3(0.0f);
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), model_pos);
-	glm::mat4 mvp = proj * view * model;
-
-	glm::ivec2 dmouse(0);
-
-	glUseProgram(program_ids[PROGRAM_MINIMAP]);
-	glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "color_texture"), 0);
-	glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "depth_texture"), 1);
+    glUseProgram(program_ids[PROGRAM_MINIMAP]);
+    glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "color_texture"), 0);
+    glUniform1i(glGetUniformLocation(program_ids[PROGRAM_MINIMAP], "depth_texture"), 1);
     glUseProgram(program_ids[PROGRAM_BASIC]);
-	GLint mvp_uniform_loc = glGetUniformLocation(program_ids[PROGRAM_BASIC], "mvp");
-	GLint cam_pos_uniform_loc = glGetUniformLocation(
-													program_ids[PROGRAM_BASIC],
-													"cam_pos");
+    GLint mvp_uniform_loc = glGetUniformLocation(program_ids[PROGRAM_BASIC], "mvp");
+    GLint cam_pos_uniform_loc = glGetUniformLocation(
+                                                    program_ids[PROGRAM_BASIC],
+                                                    "cam_pos");
 
     glLineWidth(2.0f);
 
-	long long frame_count = 0;
+    long long frame_count = 0;
 
-	float speed = 0.1f;
-	float sensitivity = 0.005f;
+    float speed = 0.1f;
+    float sensitivity = 0.005f;
 
-	input_controller icontroller;
+    input_controller icontroller;
 
     // start render loop
     bool quit = false;
     while(!quit) {
         SDL_Event event;
         while(SDL_PollEvent(&event)) {
-			quit = process_event(event, icontroller);
+            quit = process_event(event, icontroller);
         }
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, minimap.framebuffer_name);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, minimap.framebuffer_name);
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
         glUseProgram(program_ids[PROGRAM_BASIC]);
-        glBindVertexArray(vao);
-		// send mvp
-		glUniformMatrix4fv(
-				mvp_uniform_loc,
-				1,
-				GL_FALSE,
-				glm::value_ptr(mvp));
-		// send cam_pos
-		glUniform3fv(
-				cam_pos_uniform_loc,
-				1,
-				glm::value_ptr(cam_pos));
-		// draw maze to framebuffer
-        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-
-		
+        glBindVertexArray(maze_pos_vao);
+        // send mvp
+        glUniformMatrix4fv(
+                mvp_uniform_loc,
+                1,
+                GL_FALSE,
+                glm::value_ptr(mvp));
+        // send cam_pos
+        glUniform3fv(
+                cam_pos_uniform_loc,
+                1,
+                glm::value_ptr(cam_pos));
+        // draw maze to framebuffer
+        glDrawArrays(GL_TRIANGLES, 0, maze_pos.size());
+        
         // draw frame
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glUseProgram(program_ids[PROGRAM_MINIMAP]);
-		glBindVertexArray(quad_vao);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, minimap.color_texture);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, minimap.depth_stencil_texture);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+        glUseProgram(program_ids[PROGRAM_MINIMAP]);
+        glBindVertexArray(quad_vao);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, minimap.color_texture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, minimap.depth_stencil_texture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // draw arrow in perspective, but not in viewport.
         glBindVertexArray(arrow_vao);
@@ -331,212 +337,212 @@ int main(int argc, char** argv) {
         glm::mat4 arrow_model = glm::mat4(1.0f);
         glm::mat4 arrow_view = glm::lookAt(
                 -5.0f * cam_front,
-				glm::vec3(0.0f, 0.0f, 0.0f),
-				cam_up);
+                glm::vec3(0.0f, 0.0f, 0.0f),
+                cam_up);
 
         glm::mat4 arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
-		glUniformMatrix4fv(
-				mvp_uniform_loc,
-				1,
-				GL_FALSE,
-				glm::value_ptr(arrow_mvp));
-		glDrawArrays(GL_LINE_STRIP, 0, 5);
+        glUniformMatrix4fv(
+                mvp_uniform_loc,
+                1,
+                GL_FALSE,
+                glm::value_ptr(arrow_mvp));
+        glDrawArrays(GL_LINE_STRIP, 0, 5);
 
         arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
-		glUniformMatrix4fv(
-				mvp_uniform_loc,
-				1,
-				GL_FALSE,
-				glm::value_ptr(arrow_mvp));
-		glDrawArrays(GL_LINE_STRIP, 0, 5);
+        glUniformMatrix4fv(
+                mvp_uniform_loc,
+                1,
+                GL_FALSE,
+                glm::value_ptr(arrow_mvp));
+        glDrawArrays(GL_LINE_STRIP, 0, 5);
 
         arrow_model = glm::rotate(arrow_model, glm::radians(90.0f), glm::vec3(0.0f,-1.0f, 0.0f));
         arrow_mvp = arrow_shift * proj * arrow_view * arrow_model;
-		glUniformMatrix4fv(
-				mvp_uniform_loc,
-				1,
-				GL_FALSE,
-				glm::value_ptr(arrow_mvp));
-		glDrawArrays(GL_LINE_STRIP, 0, 5);
+        glUniformMatrix4fv(
+                mvp_uniform_loc,
+                1,
+                GL_FALSE,
+                glm::value_ptr(arrow_mvp));
+        glDrawArrays(GL_LINE_STRIP, 0, 5);
 
 
         SDL_GL_SwapWindow(window);
 
-		if (icontroller.is_active(FORWARD)) {
-			cam_pos += speed * cam_front;
-		}
-		
-		if (icontroller.is_active(BACKWARD)) {
-			cam_pos -= speed * cam_front;
-		}
-		
-		if (icontroller.is_active(RIGHT)) {
-			cam_pos += speed * cam_right;
-		}
-		
-		if (icontroller.is_active(LEFT)) {
-			cam_pos -= speed * cam_right;
-		}
-		
-		if (icontroller.is_active(UP)) {
-			cam_pos += speed * cam_up;
-		}
-		
-		if (icontroller.is_active(DOWN)) {
-			cam_pos -= speed * cam_up;
-		}
+        if (icontroller.is_active(FORWARD)) {
+            cam_pos += speed * cam_front;
+        }
+        
+        if (icontroller.is_active(BACKWARD)) {
+            cam_pos -= speed * cam_front;
+        }
+        
+        if (icontroller.is_active(RIGHT)) {
+            cam_pos += speed * cam_right;
+        }
+        
+        if (icontroller.is_active(LEFT)) {
+            cam_pos -= speed * cam_right;
+        }
+        
+        if (icontroller.is_active(UP)) {
+            cam_pos += speed * cam_up;
+        }
+        
+        if (icontroller.is_active(DOWN)) {
+            cam_pos -= speed * cam_up;
+        }
 
-		icontroller.reload();
-		SDL_GetRelativeMouseState(&dmouse.x, &dmouse.y);
+        icontroller.reload();
+        SDL_GetRelativeMouseState(&dmouse.x, &dmouse.y);
 
-		cam_right = glm::rotate(glm::rotate(cam_right, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
-		cam_front = glm::rotate(glm::rotate(cam_front, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
-		cam_up = glm::cross(cam_right, cam_front);
-		
-		view = glm::lookAt(
-				cam_pos,
-				cam_front + cam_pos,
-				cam_up);
-		mvp = proj * view * model;
+        cam_right = glm::rotate(glm::rotate(cam_right, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
+        cam_front = glm::rotate(glm::rotate(cam_front, sensitivity * -dmouse.x, cam_up), sensitivity * -dmouse.y, cam_right);
+        cam_up = glm::cross(cam_right, cam_front);
+        
+        view = glm::lookAt(
+                cam_pos,
+                cam_front + cam_pos,
+                cam_up);
+        mvp = proj * view * model;
 
-		frame_count++;
+        frame_count++;
     }
 
     glDeleteProgram(program_ids[PROGRAM_BASIC]);
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
-	return 0;
+    return 0;
 }
 
 void opengl_message_callback(
-		GLenum source,
-		GLenum type,
-		GLuint id,
-		GLenum severity,
-		GLsizei length,
-		GLchar const* message,
-		void const* user_param)
+        GLenum source,
+        GLenum type,
+        GLuint id,
+        GLenum severity,
+        GLsizei length,
+        GLchar const* message,
+        void const* user_param)
 {
-	auto const src_str = [source]() {
-		switch (source)
-		{
-		case GL_DEBUG_SOURCE_API:
-			return "API";
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-			return "WINDOW SYSTEM";
-		case GL_DEBUG_SOURCE_SHADER_COMPILER:
-			return "SHADER COMPILER";
-		case GL_DEBUG_SOURCE_THIRD_PARTY:
-			return "THIRD PARTY";
-		case GL_DEBUG_SOURCE_APPLICATION:
-			return "APPLICATION";
-		case GL_DEBUG_SOURCE_OTHER:
-			return "OTHER";
-		default:
-			return "what??";
-		}
-	}();
+    auto const src_str = [source]() {
+        switch (source)
+        {
+        case GL_DEBUG_SOURCE_API:
+            return "API";
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            return "WINDOW SYSTEM";
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            return "SHADER COMPILER";
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            return "THIRD PARTY";
+        case GL_DEBUG_SOURCE_APPLICATION:
+            return "APPLICATION";
+        case GL_DEBUG_SOURCE_OTHER:
+            return "OTHER";
+        default:
+            return "what??";
+        }
+    }();
 
-	auto const type_str = [type]() {
-		switch (type)
-		{
-		case GL_DEBUG_TYPE_ERROR:
-			return "ERROR";
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-			return "DEPRECATED_BEHAVIOR";
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-			return "UNDEFINED_BEHAVIOR";
-		case GL_DEBUG_TYPE_PORTABILITY:
-			return "PORTABILITY";
-		case GL_DEBUG_TYPE_PERFORMANCE:
-			return "PERFORMANCE";
-		case GL_DEBUG_TYPE_MARKER:
-			return "MARKER";
-		case GL_DEBUG_TYPE_OTHER:
-			return "OTHER";
-		default:
-			return "what??";
-		}
-	}();
+    auto const type_str = [type]() {
+        switch (type)
+        {
+        case GL_DEBUG_TYPE_ERROR:
+            return "ERROR";
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            return "DEPRECATED_BEHAVIOR";
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            return "UNDEFINED_BEHAVIOR";
+        case GL_DEBUG_TYPE_PORTABILITY:
+            return "PORTABILITY";
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            return "PERFORMANCE";
+        case GL_DEBUG_TYPE_MARKER:
+            return "MARKER";
+        case GL_DEBUG_TYPE_OTHER:
+            return "OTHER";
+        default:
+            return "what??";
+        }
+    }();
 
-	auto const severity_str = [severity] () {
-		switch (severity) {
-		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			return "NOTIFICATION";
-		case GL_DEBUG_SEVERITY_LOW:
-			return "LOW";
-		case GL_DEBUG_SEVERITY_MEDIUM:
-			return "MEDIUM";
-		case GL_DEBUG_SEVERITY_HIGH:
-			return "HIGH";
-		default:
-			return "what??";
-		}
-	}();
+    auto const severity_str = [severity] () {
+        switch (severity) {
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            return "NOTIFICATION";
+        case GL_DEBUG_SEVERITY_LOW:
+            return "LOW";
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            return "MEDIUM";
+        case GL_DEBUG_SEVERITY_HIGH:
+            return "HIGH";
+        default:
+            return "what??";
+        }
+    }();
 
-	std::fprintf(
-			stderr,
-			"OPENGL CALLBACK: %s, %s, %s, %d, %s\n",
-			src_str,
-			type_str,
-			severity_str,
-			id,
-			message);
+    std::fprintf(
+            stderr,
+            "OPENGL CALLBACK: %s, %s, %s, %d, %s\n",
+            src_str,
+            type_str,
+            severity_str,
+            id,
+            message);
 }
 
 bool process_event(SDL_Event event, input_controller& icontroller) {
-			switch (event.type) {
-			case SDL_QUIT:
-				return true;
-			case SDL_KEYDOWN:
-				switch (event.key.keysym.sym) {
-				case SDLK_ESCAPE:
-					return true;
-				case SDLK_w:
-					icontroller.key_down(FORWARD);
-					break;
-				case SDLK_a:
-					icontroller.key_down(LEFT);
-					break;
-				case SDLK_s:
-					icontroller.key_down(BACKWARD);
-					break;
-				case SDLK_d:
-					icontroller.key_down(RIGHT);
-					break;
-				case SDLK_SPACE:
-					icontroller.key_down(UP);
-					break;
-				case SDLK_LSHIFT:
-					icontroller.key_down(DOWN);
-					break;
-				}
-				break;
-			case SDL_KEYUP:
-				switch (event.key.keysym.sym) {
-				case SDLK_w:
-					icontroller.key_up(FORWARD);
-					break;
-				case SDLK_a:
-					icontroller.key_up(LEFT);
-					break;
-				case SDLK_s:
-					icontroller.key_up(BACKWARD);
-					break;
-				case SDLK_d:
-					icontroller.key_up(RIGHT);
-					break;
-				case SDLK_SPACE:
-					icontroller.key_up(UP);
-					break;
-				case SDLK_LSHIFT:
-					icontroller.key_up(DOWN);
-					break;
-				}
-				break;
-			}
+    switch (event.type) {
+    case SDL_QUIT:
+        return true;
+    case SDL_KEYDOWN:
+        switch (event.key.keysym.sym) {
+        case SDLK_ESCAPE:
+            return true;
+        case SDLK_w:
+            icontroller.key_down(FORWARD);
+            break;
+        case SDLK_a:
+            icontroller.key_down(LEFT);
+            break;
+        case SDLK_s:
+            icontroller.key_down(BACKWARD);
+            break;
+        case SDLK_d:
+            icontroller.key_down(RIGHT);
+            break;
+        case SDLK_SPACE:
+            icontroller.key_down(UP);
+            break;
+        case SDLK_LSHIFT:
+            icontroller.key_down(DOWN);
+            break;
+        }
+        break;
+    case SDL_KEYUP:
+        switch (event.key.keysym.sym) {
+        case SDLK_w:
+            icontroller.key_up(FORWARD);
+            break;
+        case SDLK_a:
+            icontroller.key_up(LEFT);
+            break;
+        case SDLK_s:
+            icontroller.key_up(BACKWARD);
+            break;
+        case SDLK_d:
+            icontroller.key_up(RIGHT);
+            break;
+        case SDLK_SPACE:
+            icontroller.key_up(UP);
+            break;
+        case SDLK_LSHIFT:
+            icontroller.key_up(DOWN);
+            break;
+        }
+        break;
+    }
 
-			return false;
+    return false;
 }
