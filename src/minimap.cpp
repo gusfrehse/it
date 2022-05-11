@@ -1,32 +1,35 @@
 #include "minimap.h"
+#include "shaders.h"
 
 #include <cstdio>
 
-int init_minimap_things(minimap_settings &set) {
+Minimap::Minimap(int fb_width, int fb_height) : fb_width(fb_width), fb_height(fb_height) {}
+
+int Minimap::create() {
     // Create a framebuffer
-    glGenFramebuffers(1, &(set.framebuffer_name));
-    glBindFramebuffer(GL_FRAMEBUFFER, set.framebuffer_name);
+    glGenFramebuffers(1, &(fb_name));
+    glBindFramebuffer(GL_FRAMEBUFFER, fb_name);
     
     // Create the color attachment texture we are rendering to
-    glGenTextures(1, &(set.color_texture));
-    glBindTexture(GL_TEXTURE_2D, set.color_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, set.framebuffer_width,
-                 set.framebuffer_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glGenTextures(1, &(color_texture));
+    glBindTexture(GL_TEXTURE_2D, color_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width,
+                 fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                         set.color_texture, 0);
+                         color_texture, 0);
     
     // Create Depth and Stencil texture
-    glGenTextures(1, &(set.depth_stencil_texture));
-    glBindTexture(GL_TEXTURE_2D, set.depth_stencil_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, set.framebuffer_width,
-                 set.framebuffer_height, 0, GL_DEPTH_STENCIL,
+    glGenTextures(1, &(depth_stencil_texture));
+    glBindTexture(GL_TEXTURE_2D, depth_stencil_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, fb_width,
+                 fb_height, 0, GL_DEPTH_STENCIL,
                  GL_UNSIGNED_INT_24_8, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                         set.depth_stencil_texture, 0);
+                         depth_stencil_texture, 0);
     
 
     GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -49,4 +52,32 @@ int init_minimap_things(minimap_settings &set) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return 1;
+}
+
+// TODO: remove these (program_ids, vao) to something sensible
+void Minimap::render(GLuint quad_vao, GLuint program_ids[]) {
+    // bind framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, fb_name);
+    glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // draw maze to framebuffer in wireframe
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //maze.render();
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
+    // draw minimap
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glUseProgram(program_ids[PROGRAM_MINIMAP]);
+    glBindVertexArray(quad_vao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, color_texture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depth_stencil_texture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }

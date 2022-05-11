@@ -3,15 +3,23 @@
 
 #include <gl/glew.h>
 
-struct minimap_settings {
-    GLuint framebuffer_name;
+class Minimap {
+private:
+    GLuint fb_name;
     GLuint color_texture;
     GLuint depth_stencil_texture;
     GLuint depth_renderbuffer;
-    int framebuffer_width;
-    int framebuffer_height;
+    int fb_width;
+    int fb_height;
+
+
+public:
+    Minimap(int fb_width, int fb_height);
+
+    int create();
+
+    void render(GLuint quad_vao, GLuint program_ids[]);
 };
 
-int init_minimap_things(minimap_settings &set);
-
 #endif
+

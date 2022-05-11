@@ -22,14 +22,23 @@
 bool process_event(SDL_Event event, input_controller& icontroller);
 
 // quad data
+//float quad_pos[] = {
+//     1.0f,  1.0f, 0.0f,
+//    -1.0f,  1.0f, 0.0f,
+//     1.0f, -1.0f, 0.0f,
+//
+//    -1.0f, -1.0f, 0.0f,
+//     1.0f, -1.0f, 0.0f,
+//    -1.0f,  1.0f, 0.0f,
+//};
 float quad_pos[] = {
-     0.5f,  0.5f, 0.0f,
-    -0.5f,  0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
+     0.4,  0.4, 0.0f,
+    -0.4,  0.4, 0.0f,
+     0.4, -0.4, 0.0f,
 
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-    -0.5f,  0.5f, 0.0f,
+    -0.4, -0.4, 0.0f,
+     0.4, -0.4, 0.0f,
+    -0.4,  0.4, 0.0f,
 };
 
 float quad_uv[] = {
@@ -86,7 +95,7 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
             SDL_WINDOW_OPENGL);
     context = SDL_GL_CreateContext(window);
 
-    SDL_GL_SetSwapInterval(0);
+    SDL_GL_SetSwapInterval(1);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -122,11 +131,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    Minimap minimap(WIDTH, HEIGHT);
 
-    minimap_settings minimap = {};
-    minimap.framebuffer_width = WIDTH;
-    minimap.framebuffer_height = HEIGHT;
-    if (!init_minimap_things(minimap)) 
+
+    if (!minimap.create()) 
         return 1;
     
     // quad things for minimap
@@ -296,7 +304,7 @@ int main(int argc, char** argv) {
             quit = process_event(event, icontroller);
         }
         
-        glBindFramebuffer(GL_FRAMEBUFFER, minimap.framebuffer_name);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
@@ -313,21 +321,11 @@ int main(int argc, char** argv) {
                 cam_pos_uniform_loc,
                 1,
                 glm::value_ptr(cam_pos));
-        // draw maze to framebuffer
+        // draw maze
         glDrawArrays(GL_TRIANGLES, 0, maze_pos.size());
         
-        // draw frame
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-        glUseProgram(program_ids[PROGRAM_MINIMAP]);
-        glBindVertexArray(quad_vao);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, minimap.color_texture);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, minimap.depth_stencil_texture);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // draw minimap
+        minimap.render(quad_vao, program_ids);
 
         // draw arrow in perspective, but not in viewport.
         glBindVertexArray(arrow_vao);
