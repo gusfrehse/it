@@ -5,10 +5,11 @@ For both os' you will need CMake. You can change the generator
 passing the `-G <generator>` argument.
 
 ## Specially for Linux
-Comment the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` and uncomment
-the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` in the `CMakeLists.txt` file.
+Comment the `set(VCPKG_TARGET_TRIPLET x64-windows-static)`, uncomment
+the `set(VCPKG_TARGET_TRIPLET x64-windows-static)` and comment the
+`WIN32`, all in the `CMakeLists.txt` file.
 
-Then, in the shell run:
+Then, in the shell, run:
     
     sudo apt install libx11-dev libxft-dev libxext-dev # or the equivalent for your package manager
 
