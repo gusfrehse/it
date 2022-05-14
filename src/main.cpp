@@ -263,7 +263,6 @@ int main(int argc, char** argv) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 0.3, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
         glUseProgram(program_ids[PROGRAM_BASIC]);
 
         // send mvp

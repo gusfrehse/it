@@ -72,8 +72,6 @@ void Minimap::render(GLuint quad_vao, GLuint program_ids[], const maze& m) {
     // draw minimap
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    //glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glUseProgram(program_ids[PROGRAM_MINIMAP]);
     glBindVertexArray(quad_vao);
