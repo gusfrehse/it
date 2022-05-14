@@ -117,9 +117,9 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
 
 int main(int argc, char** argv) {
     maze m;
-    m.construct(glm::ivec3(0));
+    m.create_paths(glm::ivec3(0));
     m.print();
-    auto maze_pos = m.gen_vertices(10.0f);
+    m.gen_vertices(10.0f);
 
     SDL_Window* window;
     SDL_GLContext context;
@@ -136,6 +136,9 @@ int main(int argc, char** argv) {
 
     if (!minimap.create()) 
         return 1;
+
+    // init things
+    m.init_gl();
     
     // quad things for minimap
     GLuint quad_vao;
@@ -213,53 +216,6 @@ int main(int argc, char** argv) {
         glEnableVertexAttribArray(arrow_color_attrib_index);
     }
     
-    unsigned int maze_pos_vao;
-    unsigned int maze_pos_vbo;
-    {
-        // create a vertex buffer object and initialize it
-        glGenBuffers(1, &maze_pos_vbo);
-
-        // create a vertex array object
-        glGenVertexArrays(1, &maze_pos_vao);
-
-        // bind vao
-        glBindVertexArray(maze_pos_vao);
-
-        // bind vbo to current array_buffer
-        glBindBuffer(GL_ARRAY_BUFFER, maze_pos_vbo);
-
-        // set the data of the current array_buffer
-        glBufferData(
-                GL_ARRAY_BUFFER,
-                maze_pos.size() * sizeof(glm::vec3),
-                maze_pos.data(),
-                GL_DYNAMIC_DRAW);
-
-        // in shader: (location = vertex_attrib_index)
-        GLuint maze_vertex_attrib_index = 0;
-        GLuint maze_color_attrib_index = 1;
-
-        // enable attrib
-        glEnableVertexAttribArray(maze_vertex_attrib_index);
-        glEnableVertexAttribArray(maze_color_attrib_index);
-
-        // show opengl how to interpret the attrib
-        glVertexAttribPointer(
-                maze_vertex_attrib_index,
-                3,
-                GL_FLOAT,
-                GL_FALSE,
-                6 * sizeof(float),
-                (void*)0);
-
-        glVertexAttribPointer(
-                maze_color_attrib_index,
-                3,
-                GL_FLOAT,
-                GL_FALSE,
-                6 * sizeof(float),
-                (void*)(3 * sizeof(float)));
-    }
 
     glm::mat4 proj = glm::perspective(
             glm::radians(90.0f),
@@ -309,25 +265,28 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
         glUseProgram(program_ids[PROGRAM_BASIC]);
-        glBindVertexArray(maze_pos_vao);
+
         // send mvp
         glUniformMatrix4fv(
                 mvp_uniform_loc,
                 1,
                 GL_FALSE,
                 glm::value_ptr(mvp));
+
         // send cam_pos
         glUniform3fv(
                 cam_pos_uniform_loc,
                 1,
                 glm::value_ptr(cam_pos));
+
         // draw maze
-        glDrawArrays(GL_TRIANGLES, 0, maze_pos.size());
+        m.render();
         
         // draw minimap
-        minimap.render(quad_vao, program_ids);
+        minimap.render(quad_vao, program_ids, m);
 
         // draw arrow in perspective, but not in viewport.
+        glDisable(GL_DEPTH_TEST);
         glBindVertexArray(arrow_vao);
         glUseProgram(program_ids[PROGRAM_BASIC]);
 
@@ -363,6 +322,7 @@ int main(int argc, char** argv) {
                 GL_FALSE,
                 glm::value_ptr(arrow_mvp));
         glDrawArrays(GL_LINE_STRIP, 0, 5);
+        glEnable(GL_DEPTH_TEST);
 
 
         SDL_GL_SwapWindow(window);

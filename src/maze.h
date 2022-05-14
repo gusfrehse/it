@@ -1,6 +1,7 @@
 #ifndef IT_MAZE_H
 #define IT_MAZE_H
 
+#include <gl/glew.h>
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -11,14 +12,18 @@
 
 class maze {
 	uint32_t data[MAZE_WIDTH][MAZE_HEIGHT][MAZE_LENGTH];
+    std::vector<glm::vec3> vertices;
+    GLuint vao;
+    GLuint vbo;
 
 public:
 	maze();
-	void construct(glm::ivec3 start);
-	void reset();
+	void create_paths(glm::ivec3 start);
 	bool in_bounds(glm::ivec3 p) const;
-	std::vector<glm::vec3> gen_vertices(float wall_size) const;
+	void gen_vertices(float wall_size);
 	void print() const;
+    void init_gl();
+    void render() const;
 };
 
 #endif

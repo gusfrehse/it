@@ -101,7 +101,7 @@ void shuffle(std::vector<T>& v) {
 
 maze::maze() : data{0} {}
 
-void maze::construct(glm::ivec3 start) {
+void maze::create_paths(glm::ivec3 start) {
 	std::vector dirs{ XPOSITIVE, XNEGATIVE, YPOSITIVE, YNEGATIVE, ZPOSITIVE, ZNEGATIVE };
 
 	shuffle(dirs);
@@ -112,13 +112,9 @@ void maze::construct(glm::ivec3 start) {
 			data[start.x][start.y][start.z] |= dirs[i];
 			data[next.x][next.y][next.z] |= opposite(dirs[i]);
 
-			construct(next);
+			create_paths(next);
 		}
 	}
-}
-
-void maze::reset() {
-	std::memset(data, 0, MAZE_WIDTH * MAZE_HEIGHT * MAZE_LENGTH);
 }
 
 bool maze::in_bounds(glm::ivec3 p) const {
@@ -127,10 +123,7 @@ bool maze::in_bounds(glm::ivec3 p) const {
 		   p.z >= 0 && p.z < MAZE_LENGTH;
 }
 
-std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
-
-	std::vector<glm::vec3> vertices;
-
+void maze::gen_vertices(float wall_size) {
 	for (int z = 0; z < MAZE_LENGTH; z++) {
 		for (int y = 0; y < MAZE_HEIGHT; y++) {
 			for (int x = 0; x < MAZE_WIDTH; x++) {
@@ -170,8 +163,6 @@ std::vector<glm::vec3> maze::gen_vertices(float wall_size) const {
 			append_wall(vertices, ZPOSITIVE, wall_size, x, y, MAZE_LENGTH - 1);
 			}
 	}
-	
-	return vertices;
 }
 
 static void append_wall(std::vector<glm::vec3> &vertices, int d, float wall_size, int x, int y, int z) {
@@ -296,4 +287,55 @@ void maze::print() const {
             }
         }
     }
+}
+
+void maze::init_gl() {
+    // create a vertex buffer object and initialize it
+    glGenBuffers(1, &vbo);
+
+    // create a vertex array object
+    glGenVertexArrays(1, &vao);
+
+    // bind vao
+    glBindVertexArray(vao);
+
+    // bind vbo to current array_buffer
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    // set the data of the current array_buffer
+    glBufferData(
+            GL_ARRAY_BUFFER,
+            vertices.size() * sizeof(glm::vec3),
+            vertices.data(),
+            GL_DYNAMIC_DRAW);
+
+    // in shader: (location = vertex_attrib_index)
+    const GLuint maze_vertex_attrib_index = 0;
+    const GLuint maze_color_attrib_index = 1;
+
+    // enable attrib
+    glEnableVertexAttribArray(maze_vertex_attrib_index);
+    glEnableVertexAttribArray(maze_color_attrib_index);
+
+    // show opengl how to interpret the attrib
+    glVertexAttribPointer(
+            maze_vertex_attrib_index,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            6 * sizeof(float),
+            (void*)0);
+
+    glVertexAttribPointer(
+            maze_color_attrib_index,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            6 * sizeof(float),
+            (void*)(3 * sizeof(float)));
+}
+
+void maze::render() const {
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }

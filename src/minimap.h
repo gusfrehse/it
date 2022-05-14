@@ -3,12 +3,16 @@
 
 #include <gl/glew.h>
 
+#include "maze.h"
+
 class Minimap {
 private:
+public:
     GLuint fb_name;
     GLuint color_texture;
     GLuint depth_stencil_texture;
     GLuint depth_renderbuffer;
+    GLuint vao;
     int fb_width;
     int fb_height;
 
@@ -18,7 +22,8 @@ public:
 
     int create();
 
-    void render(GLuint quad_vao, GLuint program_ids[]);
+    // TODO: change quad_vao to vao (lol)
+    void render(GLuint quad_vao, GLuint program_ids[], const maze& m);
 };
 
 #endif

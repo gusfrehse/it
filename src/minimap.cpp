@@ -55,16 +55,18 @@ int Minimap::create() {
 }
 
 // TODO: remove these (program_ids, vao) to something sensible
-void Minimap::render(GLuint quad_vao, GLuint program_ids[]) {
+void Minimap::render(GLuint quad_vao, GLuint program_ids[], const maze& m) {
     // bind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, fb_name);
     glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // draw maze to framebuffer in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    //maze.render();
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glUseProgram(program_ids[PROGRAM_BASIC]);
+    m.render();
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
     // draw minimap
@@ -80,4 +82,5 @@ void Minimap::render(GLuint quad_vao, GLuint program_ids[]) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depth_stencil_texture);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    glEnable(GL_DEPTH_TEST);
 }
