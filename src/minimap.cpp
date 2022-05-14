@@ -13,8 +13,8 @@ int Minimap::create() {
     // Create the color attachment texture we are rendering to
     glGenTextures(1, &(color_texture));
     glBindTexture(GL_TEXTURE_2D, color_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width,
-                 fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, fb_width,
+                 fb_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
@@ -58,7 +58,7 @@ int Minimap::create() {
 void Minimap::render(GLuint quad_vao, GLuint program_ids[], const maze& m) {
     // bind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, fb_name);
-    glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
+    glClearColor(0.3f, 0.3f, 0.8f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // draw maze to framebuffer in wireframe

@@ -186,30 +186,6 @@ static void append_wall(std::vector<glm::vec3> &vertices, int d, float wall_size
 }
 
 void maze::print() const {
-    /*
-	for (int z = 0; z < MAZE_LENGTH; z++) {
-		for (int i = 0; i < MAZE_WIDTH; i++)
-			std::printf("__");
-
-		printf(" z = %d\n", z);
-
-		for (int y = 0; y < MAZE_HEIGHT; y++) {
-			std::putchar('|');
-
-			for (int x = 0; x < MAZE_WIDTH; x++) {
-				std::putchar((data[x][y][z] & ZPOSITIVE) != 0 ? ' ' : '_');
-
-				if ((data[x][y][z] & XPOSITIVE) != 0) {
-					std::putchar((((data[x][y][z] | data[x + 1][y][z]) & ZPOSITIVE) != 0) ? ' ' : '_');
-				} else {
-					std::putchar('|');
-				}
-			}
-			std::putchar('\n');
-		}
-	}
-    */
-
 
     // nine by nine, very ugly probably.
     for (int y = 0; y < MAZE_HEIGHT; y++) {
@@ -267,26 +243,26 @@ void maze::print() const {
     }
     std::printf("\n");
 
-    for (int x = 0; x < MAZE_WIDTH; x++) {
-        for (int y = 0; y < MAZE_HEIGHT; y++) {
-            for (int z = 0; z < MAZE_HEIGHT; z++) {
-                std::printf("%d %d %d: ", x, y, z);
-                if (data[x][y][z] & XPOSITIVE)
-                    std::printf("XPOSITIVE ");
-                if (data[x][y][z] & XNEGATIVE)
-                    std::printf("XNEGATIVE ");
-                if (data[x][y][z] & YPOSITIVE)
-                    std::printf("YPOSITIVE ");
-                if (data[x][y][z] & YNEGATIVE)
-                    std::printf("YNEGATIVE ");
-                if (data[x][y][z] & ZPOSITIVE)
-                    std::printf("ZPOSITIVE ");
-                if (data[x][y][z] & ZNEGATIVE)
-                    std::printf("ZNEGATIVE ");
-                std::printf("\n");
-            }
-        }
-    }
+    //for (int x = 0; x < MAZE_WIDTH; x++) {
+    //    for (int y = 0; y < MAZE_HEIGHT; y++) {
+    //        for (int z = 0; z < MAZE_HEIGHT; z++) {
+    //            std::printf("%d %d %d: ", x, y, z);
+    //            if (data[x][y][z] & XPOSITIVE)
+    //                std::printf("XPOSITIVE ");
+    //            if (data[x][y][z] & XNEGATIVE)
+    //                std::printf("XNEGATIVE ");
+    //            if (data[x][y][z] & YPOSITIVE)
+    //                std::printf("YPOSITIVE ");
+    //            if (data[x][y][z] & YNEGATIVE)
+    //                std::printf("YNEGATIVE ");
+    //            if (data[x][y][z] & ZPOSITIVE)
+    //                std::printf("ZPOSITIVE ");
+    //            if (data[x][y][z] & ZNEGATIVE)
+    //                std::printf("ZNEGATIVE ");
+    //            std::printf("\n");
+    //        }
+    //    }
+    //}
 }
 
 void maze::init_gl() {

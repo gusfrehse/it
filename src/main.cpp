@@ -110,6 +110,9 @@ void init(SDL_Window*& window, SDL_GLContext& context) {
 
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(opengl_message_callback, nullptr);
     glViewport(0, 0, WIDTH, HEIGHT);

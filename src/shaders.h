@@ -10,7 +10,6 @@ enum program_names { PROGRAM_BASIC, PROGRAM_MINIMAP, PROGRAM_COUNT };
 
 /**
  * @brief Shader information before compilation.
- * 
  */
 struct pre_shader {
     GLenum type;
@@ -47,7 +46,7 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
         "#version 450 core\n" SHADER_CODE(
         in  vec4 vertex_color;
         in  vec3 pos;
-        layout(location = 0) out vec3 color;
+        layout(location = 0) out vec4 color;
         uniform vec3 cam_pos;
 
         void main()
@@ -55,7 +54,7 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
             float dist = length(pos - cam_pos);
             dist = dist * dist;
             // TODO: redo this
-            color = vertex_color.xyz * 90.0 / (dist + 50.0);
+            color = vec4(vertex_color.xyz * 90.0 / (dist + 50.0), 1.0);
         }),
     },
     {
@@ -86,8 +85,8 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
 
         void main()
         {
-            vec3 col = texture(color_texture, uv).rgb;
-            color = vec4(col, 1.0);
+            vec4 col = texture(color_texture, uv);
+            color = col;
         }),
     },
 };
