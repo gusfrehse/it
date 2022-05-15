@@ -285,7 +285,7 @@ int main(int argc, char** argv) {
         m.render();
         
         // draw minimap
-        minimap.render(quad_vao, program_ids, m);
+        minimap.render(quad_vao, program_ids, mvp_uniform_loc, m);
 
         // draw arrow in perspective, but not in viewport.
         glDisable(GL_DEPTH_TEST);

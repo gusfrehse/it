@@ -54,7 +54,7 @@ const pre_shader pre_shaders[SHADER_COUNT] = {
             float dist = length(pos - cam_pos);
             dist = dist * dist;
             // TODO: redo this
-            color = vec4(vertex_color.xyz * 90.0 / (dist + 50.0), 1.0);
+            color = vec4(1.0) * 90.0 / (dist + 50.0);
         }),
     },
     {

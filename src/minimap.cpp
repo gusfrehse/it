@@ -3,6 +3,11 @@
 
 #include <cstdio>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+
 Minimap::Minimap(int fb_width, int fb_height) : fb_width(fb_width), fb_height(fb_height) {}
 
 int Minimap::create() {
@@ -55,7 +60,24 @@ int Minimap::create() {
 }
 
 // TODO: remove these (program_ids, vao) to something sensible
-void Minimap::render(GLuint quad_vao, GLuint program_ids[], const maze& m) {
+void Minimap::render(GLuint quad_vao, GLuint program_ids[], GLint mvp_location, const maze& m) {
+
+    // TODO: should be temp
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 20.0f, -30.0f), glm::vec3(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // TODO: REMOVE 16:9 from hardcode
+    glm::mat4 proj = glm::perspective(
+            glm::radians(90.0f),
+            16.0f / 9.0f,
+            0.1f,
+            100.0f);
+
+    glUniformMatrix4fv(
+            mvp_location,
+            1,
+            GL_FALSE,
+            glm::value_ptr(proj * view));
+
     // bind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, fb_name);
     glClearColor(0.3f, 0.3f, 0.8f, 0.0f);
@@ -64,8 +86,8 @@ void Minimap::render(GLuint quad_vao, GLuint program_ids[], const maze& m) {
     // draw maze to framebuffer in wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUseProgram(program_ids[PROGRAM_BASIC]);
-    m.render();
 
+    m.render();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
