@@ -1,4 +1,4 @@
-# it
+# it: A 3D maze generator
 # Compiling
 For both os' you will need CMake. You can change the generator
 (Makefile, Ninja, Visual Studio, etc..) in the first call to CMake,
