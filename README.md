@@ -1,4 +1,5 @@
 # it
+![Screenshot of the application running on Windows](.images/screenshot.png)
 # Compiling
 For both os' you will need CMake. You can change the generator
 (Makefile, Ninja, Visual Studio, etc..) in the first call to CMake,
