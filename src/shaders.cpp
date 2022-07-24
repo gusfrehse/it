@@ -1,5 +1,5 @@
 #include "shaders.h"
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <cstdio>
 
 bool compile_shaders(GLuint shader_ids[SHADER_COUNT]) {

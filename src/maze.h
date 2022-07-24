@@ -1,7 +1,7 @@
 #ifndef IT_MAZE_H
 #define IT_MAZE_H
 
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 #include <vector>

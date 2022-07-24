@@ -1,7 +1,7 @@
 #ifndef IT_MINIMAP_H
 #define IT_MINIMAP_H
 
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <glm/ext/quaternion_common.hpp>
 
 #include "maze.h"

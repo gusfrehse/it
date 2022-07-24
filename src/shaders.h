@@ -1,7 +1,7 @@
 #ifndef IT_SHADERS_H
 #define IT_SHADERS_H
 
-#include <gl/glew.h>
+#include <GL/glew.h>
 
 #define SHADER_CODE(...) #__VA_ARGS__
 

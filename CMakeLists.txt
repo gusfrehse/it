@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 
 # Windows
-set(VCPKG_TARGET_TRIPLET x64-windows-static)
-# Linux
 #set(VCPKG_TARGET_TRIPLET x64-windows-static)
+# Linux
+set(VCPKG_TARGET_TRIPLET x64-linux)
 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 
